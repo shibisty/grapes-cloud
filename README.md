@@ -1,222 +1,220 @@
 # grapesjs-cloud-assets
 
-Плагин для GrapesJS: вставка картинок, видео, аудио и документов из
-облачных хранилищ через один общий UI с вкладками. Первая вкладка —
-**"Свои файлы"** (локальный источник: файлы, уже добавленные в
-редактор, загрузка с диска, вставка по прямой ссылке); дальше идут
-облачные вкладки: **Dropbox**, **Google Drive** и **Microsoft
-OneDrive** настраивает владелец сайта заранее через
-`pluginsOpts.providers`, а **S3-совместимые хранилища** (сам AWS S3,
-MinIO, Wasabi, DigitalOcean Spaces, Cloudflare R2 и т.п.) добавляет
-кнопкой **"+"** в конце ряда вкладок уже сам посетитель — без правок
-в коде сайта, см. "S3-совместимые хранилища" ниже. Ряд вкладок
-адаптивный: то, что не помещается по ширине, прячется за шевроном
-"ещё вкладки". Локальную вкладку можно отключить опцией
-`includeLocalTab: false`.
+A GrapesJS plugin: insert images, video, audio and documents from
+cloud storage through a single shared UI with tabs. The first tab is
+**"My files"** (the local source: assets already added to the
+editor, upload from disk, insert by direct URL); after that come the
+cloud tabs: **Dropbox**, **Google Drive** and **Microsoft OneDrive**
+are configured ahead of time by the site owner via
+`pluginsOpts.providers`, while **S3-compatible storage** (AWS S3
+itself, MinIO, Wasabi, DigitalOcean Spaces, Cloudflare R2, etc.) is
+added with the **"+"** button at the end of the tab row by the
+visitor themselves — with no changes to the site's code, see
+"S3-compatible storage" below. The tab row is adaptive: whatever
+doesn't fit is hidden behind an "more tabs" chevron. The local tab
+can be disabled with the `includeLocalTab: false` option.
 
-Архитектурные решения (важны для дальнейшей поддержки):
+Architectural decisions (important for future maintenance):
 
-- **Не использует нативные виджеты** (Dropbox Chooser, Google
-  Picker, OneDrive File Picker). У всех провайдеров один и тот же
-  собственный UI (вкладки, breadcrumbs, грид/таблица файлов) —
-  провайдер отвечает только за данные (`list`, `resolve`,
-  `authenticate`, `upload`). Плата за единый вид — у каждого
-  провайдера своя: у Dropbox это работа с Files API v2 напрямую и
-  тип приложения **Full Dropbox** (а не App folder); у Google Drive —
-  scope `drive.readonly` вместо более узкого `drive.file`. Оба
-  относятся провайдерами к "чувствительным" и при большом количестве
-  пользователей потребуют ревью/верификации приложения в консоли
-  провайдера — в отличие от нативных пикеров, которым ревью не
-  требуется. Подробности — в разделах настройки каждого провайдера
-  ниже.
+- **Does not use native widgets** (Dropbox Chooser, Google Picker,
+  OneDrive File Picker). Every provider shares the same custom UI
+  (tabs, breadcrumbs, file grid/table) — a provider is only
+  responsible for data (`list`, `resolve`, `authenticate`,
+  `upload`). The cost of that shared look differs per provider: for
+  Dropbox it means working with the Files API v2 directly and using
+  the **Full Dropbox** app type (rather than an App folder); for
+  Google Drive it means the `drive.readonly` scope instead of the
+  narrower `drive.file`. Both providers treat these as "sensitive"
+  scopes, and at scale they'll require app review/verification in
+  the provider's console — unlike the native pickers, which need no
+  review. Details are in each provider's setup section below.
 
-- **Не трогает `assetManager.custom`.** Это единственный слот на
-  весь редактор: если на сайте есть ещё один плагин, которому тоже
-  нужен свой Asset Manager UI, они молча перезаписывают друг друга
-  при инициализации — конфликт, который трудно даже
-  диагностировать. Поэтому у плагина свой, полностью отдельный вход:
-  блок **"Облачные медиа"** (категория **Storage** в Block Manager)
-  и кнопка на верхней панели — оба открывают одно и то же окно
-  (`src/canvas/picker.ts`) через `editor.Modal`, общий стек модалок
-  редактора, а не персональный ресурс одного плагина. Стандартный
-  Asset Manager (двойной клик по картинке и т.п.) продолжает
-  работать как в чистом GrapesJS, каким бы он ни был настроен
-  другими плагинами.
+- **Does not touch `assetManager.custom`.** That's a single,
+  editor-wide slot: if the site has another plugin that also needs
+  its own Asset Manager UI, they silently overwrite each other on
+  init — a conflict that's hard to even diagnose. So this plugin has
+  its own, fully separate entry point: the **"Cloud media"** block
+  (category **Storage** in the Block Manager) and a top-panel
+  button — both open the same window (`src/canvas/picker.ts`) via
+  `editor.Modal`, the editor's shared modal stack, not a resource
+  owned by one plugin. The standard Asset Manager (double-click on
+  an image, etc.) keeps working exactly as in plain GrapesJS,
+  however it's configured by other plugins.
 
-- **Один asset — один подходящий тип компонента.** По MIME-типу
-  или расширению (см. `src/utils/assetType.ts` — таблицы
-  расширений там частично взяты из `core/modules/*` в
-  `embed-inserter`, соседнем проекте с тем же разделением
-  image/video/audio/doc) плагин вставляет: картинку — встроенным
-  типом `image`, видео — встроенным `video`, аудио — тегом
-  `<audio controls>` (в ядре GrapesJS нет отдельного типа
-  компонента под аудио), документ — ссылкой (`<a>`) на файл.
-  См. `src/canvas/componentDef.ts`.
+- **One asset → one matching component type.** By MIME type or
+  extension (see `src/utils/assetType.ts` — its extension tables are
+  partly taken from `core/modules/*` in `embed-inserter`, a sibling
+  project with the same image/video/audio/doc split), the plugin
+  inserts: an image as the built-in `image` type, a video as the
+  built-in `video` type, audio as an `<audio controls>` tag (GrapesJS
+  core has no dedicated component type for audio), a document as a
+  link (`<a>`) to the file. See `src/canvas/componentDef.ts`.
 
-## Установка
+## Installation
 
 ```bash
 npm install grapesjs-cloud-assets
 ```
 
-## Настройка облачных провайдеров
+## Configuring cloud providers
 
-Ни у Dropbox, ни у Google, ни у Microsoft нет общего App Key/Client
-ID, который работал бы на произвольном чужом домене без его
-предрегистрации в их консоли разработчика — это ограничение самих
-провайдеров, а не что-то, что можно обойти в коде плагина (проверено
-и для официальных нативных пикеров тоже — у них то же самое
-требование). Поэтому ни один из трёх провайдеров **не принимает
-ключ в конструкторе**: каждый, кто ставит этот плагин на свой сайт,
-заводит собственное приложение в консоли провайдера и вводит его
-ключ прямо в интерфейсе редактора — один раз, через встроенный
-мастер настройки, который сам показывается при первом открытии
-вкладки провайдера (до этого шага никакой кнопки "Войти" нет, входить
-ещё не с чем). После сохранения ключа мастер уступает место обычной
-кнопке "Войти" (или, для Google — авторизации через всплывающее окно
-Google без отдельного шага "Войти в приложение", см. ниже). И сам
-ключ, и токен сессии хранятся в `localStorage` браузера: при
-следующем заходе мастер настройки не показывается — либо сессия ещё
-жива и сразу виден список файлов, либо просто кнопка входа (как при
-обычном разлогине). Сбросить ключ (например, завести другое
-приложение) можно кнопкой "Изменить ключ" под кнопкой входа.
+Neither Dropbox, Google, nor Microsoft offers a shared App Key/Client
+ID that would work on an arbitrary third-party domain without
+pre-registering it in their developer console — that's a limitation
+of the providers themselves, not something the plugin's code can work
+around (verified for the official native pickers too — they have the
+exact same requirement). Because of that, none of the three providers
+**accepts a key in its constructor**: whoever installs this plugin on
+their site sets up their own app in the provider's console and enters
+its key directly in the editor's UI — once, through a built-in setup
+wizard that appears on its own the first time the provider's tab is
+opened (before that step there's no "Log in" button at all — there's
+nothing to log in with yet). After the key is saved, the wizard gives
+way to a normal "Log in" button (or, for Google, sign-in through a
+Google popup with no separate "Log in to app" step, see below). Both
+the key and the session token are stored in the browser's
+`localStorage`: on the next visit the setup wizard isn't shown again —
+either the session is still alive and the file list appears right
+away, or just the login button shows (same as an ordinary logged-out
+state). The key can be reset (e.g. to switch to a different app) via
+the "Change key" button under the login button.
 
-Чтобы выйти из текущего аккаунта и войти под другим, не трогая сам
-ключ приложения, есть отдельная кнопка "Выйти" в тулбаре (рядом с
-переключателем вида) — она видна только когда провайдер уже
-авторизован. Она чистит только сессионные токены текущего аккаунта
-(`StorageProvider.disconnect()`) и локальный список файлов, ключ/App
-Key остаётся сохранён. Для Google и Microsoft при следующем входе
-после "Выйти" всегда показывается выбор аккаунта
-(`prompt: 'select_account'`) — иначе браузер может молча
-переиспользовать тот же аккаунт, на который он уже залогинен на
-стороне самого провайдера, даже после разлогина в плагине.
+To log out of the current account and log in as a different one
+without touching the app key itself, there's a separate "Log out"
+button in the toolbar (next to the view switcher) — visible only once
+the provider is already authenticated. It only clears the current
+account's session tokens (`StorageProvider.disconnect()`) and the
+local file list; the key/App Key stays saved. For Google and
+Microsoft, the next login after "Log out" always shows the account
+picker (`prompt: 'select_account'`) — otherwise the browser might
+silently reuse the same account it's already signed into on the
+provider's own side, even after logging out of the plugin.
 
 ### Dropbox
 
-1. Ссылка на [Dropbox App Console](https://www.dropbox.com/developers/apps/create) — "Create app".
+1. Go to the [Dropbox App Console](https://www.dropbox.com/developers/apps/create) → "Create app".
 2. Choose an API → **Scoped access**. Type of access → **Full Dropbox**.
-3. Permissions: включить `files.metadata.read`, `files.content.read`, `files.content.write`.
-4. Redirect URIs: добавить URL, который мастер сам подставляет и даёт скопировать одной кнопкой — обычно это `.../public/dropbox-callback.html` на текущем домене (см. "Автоопределение redirect URI/origin" ниже).
-5. Скопировать App key со страницы Settings и вставить его в поле мастера, нажать "Сохранить".
+3. Permissions: enable `files.metadata.read`, `files.content.read`, `files.content.write`.
+4. Redirect URIs: add the URL the wizard fills in and lets you copy with one button — usually `.../public/dropbox-callback.html` on the current domain (see "Auto-detecting the redirect URI/origin" below).
+5. Copy the App key from the Settings page and paste it into the wizard's field, then click "Save".
 
-При большом числе пользователей тип **Full Dropbox** требует ревью
-приложения в Dropbox App Console (в отличие от Dropbox Chooser,
-которому ревью не нужно, но который этот плагин сознательно не
-использует — см. "Архитектурные решения" выше).
+At scale, the **Full Dropbox** access type requires app review in the
+Dropbox App Console (unlike the Dropbox Chooser, which needs no
+review, but which this plugin deliberately doesn't use — see
+"Architectural decisions" above).
 
 ### Google Drive
 
-Технически устроено иначе, чем Dropbox/OneDrive: Google не позволяет
-публичному (без backend'а) клиенту обменять код авторизации на токен
-без client secret — поэтому `GoogleDriveProvider` использует
-официальный [Google Identity Services](https://developers.google.com/identity/gsi/web) ("Token client"),
-который сам открывает и обслуживает всплывающее окно входа. Из этого
-следуют два практических отличия от Dropbox/OneDrive:
+Technically works differently from Dropbox/OneDrive: Google doesn't
+let a public client (no backend) exchange an authorization code for a
+token without a client secret — so `GoogleDriveProvider` uses the
+official [Google Identity Services](https://developers.google.com/identity/gsi/web) ("Token client"),
+which opens and manages the sign-in popup itself. Two practical
+differences from Dropbox/OneDrive follow from this:
 
-- **Не нужен свой redirect URI/callback-файл** — вместо него в
-  консоли Google регистрируется просто origin сайта (протокол +
-  домен + порт), мастер настройки подставляет его автоматически.
-- **Нет refresh-токена** — доступ выдаётся на ~1 час, и плагин тихо
-  переспрашивает его сам (без всплывающего окна) по мере
-  необходимости; если тихо не получилось (например, истекла сама
-  Google-сессия в браузере), UI откатится на кнопку "Войти" — это
-  ожидаемо, а не баг.
+- **No redirect URI/callback file is needed** — instead, the Google
+  console registers just the site's origin (protocol + domain +
+  port), which the setup wizard fills in automatically.
+- **No refresh token** — access is granted for ~1 hour, and the
+  plugin silently re-requests it as needed (no popup); if the silent
+  refresh fails (e.g. the Google browser session itself expired), the
+  UI falls back to the "Log in" button — that's expected, not a bug.
 
-Шаги мастера настройки:
+Setup wizard steps:
 
-1. Открыть [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials), создать проект (или выбрать существующий).
-2. В Library найти и включить **Google Drive API**.
-3. В OAuth consent screen: User type → **External**, добавить scope `.../auth/drive.readonly`, добавить свой Google-аккаунт в **test users** (пока приложение не верифицировано Google, вход работает только для test users и показывает предупреждение — верификация нужна для публикации на многих пользователей).
-4. Create Credentials → OAuth client ID → Application type **Web application** → в Authorized JavaScript origins вставить origin, который мастер сам подставляет и даёт скопировать одной кнопкой.
-5. Скопировать Client ID (заканчивается на `.apps.googleusercontent.com`) и вставить его в поле мастера.
+1. Open [Google Cloud Console → Credentials](https://console.cloud.google.com/apis/credentials), create a project (or pick an existing one).
+2. In the Library, find and enable the **Google Drive API**.
+3. In OAuth consent screen: User type → **External**, add the `.../auth/drive.readonly` scope, add your own Google account as a **test user** (until the app is verified by Google, sign-in only works for test users and shows a warning — verification is needed to publish for many users).
+4. Create Credentials → OAuth client ID → Application type **Web application** → in Authorized JavaScript origins, paste the origin the wizard fills in and lets you copy with one button.
+5. Copy the Client ID (ends in `.apps.googleusercontent.com`) and paste it into the wizard's field.
 
-**Важное ограничение**, которого нет у Dropbox/OneDrive: у Google
-Drive REST API нет способа отдать готовую, встраиваемую без
-заголовка `Authorization` ссылку на приватный файл без собственного
-backend-прокси. Поэтому `resolve()` у этого провайдера скачивает
-файл через авторизованный запрос и превращает его в `data:` URL —
-работает надёжно (ссылка не протухает, в отличие от временных ссылок
-Dropbox/OneDrive), но не годится для больших файлов: вставка
-ограничена **10 МБ** (`MAX_INLINE_BYTES` в `GoogleDriveProvider.ts`),
-превышение даёт понятную ошибку вместо того, чтобы раздувать
-итоговую HTML-страницу многомегабайтной base64-строкой. Google-документы/
-таблицы/презентации (не бинарные файлы) в списке не показываются —
-для них нет применимого содержимого для вставки.
+**An important limitation** that Dropbox/OneDrive don't have: the
+Drive REST API has no way to hand back a ready-to-embed link to a
+private file without the `Authorization` header, without a backend
+proxy of your own. So this provider's `resolve()` downloads the file
+via an authenticated request and turns it into a `data:` URL — this
+works reliably (the link never expires, unlike the temporary links
+from Dropbox/OneDrive), but doesn't scale to large files: inserts are
+capped at **10 MB** (`MAX_INLINE_BYTES` in `GoogleDriveProvider.ts`),
+and going over that gives a clear error instead of bloating the final
+HTML page with a multi-megabyte base64 string. Google Docs/Sheets/
+Slides (non-binary files) aren't shown in the list — there's no
+applicable content to insert for them.
 
 ### Microsoft OneDrive
 
-Архитектурно почти как Dropbox (свой PKCE-попап без client secret),
-с одним важным отличием при регистрации приложения: redirect URI
-**обязательно** нужно добавить под платформой **Single-page
-application**, а не Web — только у SPA-платформы Azure включает CORS
-на token endpoint, без чего браузерный `fetch()` до обмена code→token
-не достучится.
+Architecturally close to Dropbox (its own PKCE popup, no client
+secret), with one important difference at app-registration time: the
+redirect URI **must** be added under the **Single-page application**
+platform, not Web — only the SPA platform has Azure enable CORS on
+the token endpoint, without which a browser `fetch()` can't reach it
+for the code→token exchange.
 
 1. [Azure Portal](https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps) → Microsoft Entra ID → App registrations → **New registration**.
-2. Supported account types → **Accounts in any organizational directory and personal Microsoft accounts** (нужно и для личного OneDrive, и для рабочих/учебных аккаунтов) → Register.
-3. API permissions → Add a permission → Microsoft Graph → Delegated permissions → добавить `Files.ReadWrite` и `offline_access` → Add permissions.
-4. Authentication → Add a platform → **Single-page application** → в Redirect URIs вставить URL, который мастер сам подставляет и даёт скопировать одной кнопкой — обычно это `.../public/microsoft-callback.html` на текущем домене.
-5. На странице Overview скопировать Application (client) ID и вставить его в поле мастера.
+2. Supported account types → **Accounts in any organizational directory and personal Microsoft accounts** (needed for both personal OneDrive and work/school accounts) → Register.
+3. API permissions → Add a permission → Microsoft Graph → Delegated permissions → add `Files.ReadWrite` and `offline_access` → Add permissions.
+4. Authentication → Add a platform → **Single-page application** → in Redirect URIs, paste the URL the wizard fills in and lets you copy with one button — usually `.../public/microsoft-callback.html` on the current domain.
+5. On the Overview page, copy the Application (client) ID and paste it into the wizard's field.
 
-Ссылки на вставку (`@microsoft.graph.downloadUrl`) — временные, как и
-у Dropbox; точный срок жизни Microsoft не документирует (по опыту
-сообщества — около часа), провайдер закладывает час консервативно
-через `expiresAt`.
+Insert links (`@microsoft.graph.downloadUrl`) are temporary, like
+Dropbox's; Microsoft doesn't document their exact lifetime
+(community reports suggest around an hour), so the provider
+conservatively assumes an hour via `expiresAt`.
 
-### Автоопределение redirect URI/origin
+### Auto-detecting the redirect URI/origin
 
-Файлы `public/dropbox-callback.html` и `public/microsoft-callback.html`
-нужно один раз скопировать на свой домен (туда же, где крутится
-редактор) — например, из
-`node_modules/grapesjs-cloud-assets/public/`. Если сам плагин
-подключён обычным `<script src="...">` (как в демо `index.html` —
-не `<script type="module">` и не через бандлер), `DropboxProvider`/
-`OneDriveProvider` вычисляют нужный URL сами, по адресу своего же
-скрипта (`src/providers/ownScript.ts`) — мастер сразу покажет
-правильное значение для копирования. Для ESM/бандлерной сборки
-автоопределение не работает (`document.currentScript` для модулей
-всегда `null` по спецификации) — тогда передайте его явно:
+The files `public/dropbox-callback.html` and
+`public/microsoft-callback.html` need to be copied once to your own
+domain (wherever the editor runs) — e.g. from
+`node_modules/grapesjs-cloud-assets/public/`. If the plugin itself is
+loaded via a plain `<script src="...">` (as in the demo `index.html` —
+not `<script type="module">` and not through a bundler),
+`DropboxProvider`/`OneDriveProvider` figure out the right URL
+themselves, from their own script's address
+(`src/providers/ownScript.ts`) — the wizard will immediately show the
+correct value to copy. For an ESM/bundled build, auto-detection
+doesn't work (`document.currentScript` is always `null` for modules,
+per spec) — in that case pass it explicitly:
 `new DropboxProvider({ redirectUri: 'https://example.com/dropbox-callback.html' })`
-или `new OneDriveProvider({ redirectUri: 'https://example.com/microsoft-callback.html' })`.
-У `GoogleDriveProvider` такой опции нет и отдельного callback-файла
-не требуется — см. раздел "Google Drive" выше.
+or `new OneDriveProvider({ redirectUri: 'https://example.com/microsoft-callback.html' })`.
+`GoogleDriveProvider` has no such option and needs no separate
+callback file — see the "Google Drive" section above.
 
-### S3-совместимые хранилища
+### S3-compatible storage
 
-В отличие от Dropbox/Google/OneDrive выше, S3 не требует OAuth и
-никакой настройки со стороны владельца сайта — у S3-совместимых
-сервисов доступ выдаётся напрямую парой ключей конкретного bucket'а.
-Поэтому подключение целиком происходит в интерфейсе плагина, самим
-посетителем:
+Unlike Dropbox/Google/OneDrive above, S3 requires no OAuth and no
+setup at all on the site owner's side — S3-compatible services grant
+access directly through a bucket-specific key pair. So the whole
+connection process happens in the plugin's UI, done by the visitor
+themselves:
 
-1. Нажать **"+"** в конце ряда вкладок → **"Подключить S3"**.
-2. В открывшемся попапе ввести: название вкладки (как она будет
-   подписана), **Access Key ID**, **Secret Access Key**, **Bucket**,
-   **Region** (например `us-east-1`), и, если это не настоящий AWS S3
-   — свой **endpoint** (например `https://s3.example.com` для MinIO/
-   Wasabi/DigitalOcean Spaces/Cloudflare R2) и флажок **path-style
-   URL** (нужен почти всем self-hosted/S3-совместимым эндпоинтам,
-   кроме самого AWS).
-3. Нажать "Подключить" — плагин сразу проверяет ключи реальным
-   запросом к бакету и, если всё в порядке, добавляет новую вкладку
-   и запоминает соединение в `localStorage` браузера (переживает
-   перезагрузку страницы и повторное открытие пикера). Ошибку —
-   опечатку в ключе, неверный bucket/region — видно сразу в попапе,
-   а не только при первом открытии вкладки.
+1. Click **"+"** at the end of the tab row → **"Connect S3"**.
+2. In the popup that opens, enter: a tab name (how it will be
+   labeled), **Access Key ID**, **Secret Access Key**, **Bucket**,
+   **Region** (e.g. `us-east-1`), and, if this isn't real AWS S3, your
+   own **endpoint** (e.g. `https://s3.example.com` for MinIO/Wasabi/
+   DigitalOcean Spaces/Cloudflare R2) plus the **path-style URL**
+   checkbox (needed by almost all self-hosted/S3-compatible endpoints,
+   except AWS itself).
+3. Click "Connect" — the plugin immediately verifies the keys with a
+   real request to the bucket and, if all is well, adds a new tab and
+   remembers the connection in the browser's `localStorage` (it
+   survives a page reload and reopening the picker). An error — a
+   typo in the key, wrong bucket/region — shows up right in the popup,
+   not only the first time the tab is opened.
 
-Подключённую самим посетителем S3-вкладку (и только её — постоянные
-вкладки владельца сайта трогать нельзя) можно отключить кнопкой "×",
-которая появляется на вкладке при наведении — с тем же
-двухшаговым подтверждением ("×" → "точно?" → удаление), что и у
-разлогина/удаления файла.
+An S3 tab the visitor connected themselves (and only that one —
+tabs the site owner set up permanently cannot be touched) can be
+disconnected with an "×" button that appears on the tab on hover —
+with the same two-step confirmation ("×" → "are you sure?" → delete)
+used for logout/file deletion.
 
-**Обязательное условие** — сам бакет должен разрешать CORS-запросы с
-origin'а сайта (методы `GET`, `PUT`, `DELETE`, `HEAD`; заголовки —
-любые, `*`), иначе браузер не даст прочитать ответ ни на один
-запрос, независимо от того, насколько верны ключи. Пример CORS-
-конфигурации для AWS S3 (Permissions → Cross-origin resource sharing
-(CORS) в консоли бакета):
+**Required**: the bucket itself must allow CORS requests from the
+site's origin (methods `GET`, `PUT`, `DELETE`, `HEAD`; any headers,
+`*`), otherwise the browser won't let any response be read, no matter
+how correct the keys are. Example CORS configuration for AWS S3
+(Permissions → Cross-origin resource sharing (CORS) in the bucket
+console):
 
 ```json
 [
@@ -228,22 +226,22 @@ origin'а сайта (методы `GET`, `PUT`, `DELETE`, `HEAD`; заголо�
 ]
 ```
 
-Технически `S3Provider` (`src/providers/s3/S3Provider.ts`) подписывает
-каждый запрос по протоколу **AWS Signature Version 4** прямо в
-браузере (`src/providers/s3/sigv4.ts`, через `crypto.subtle` — без
-`aws-sdk`): `ListObjectsV2` — заголовком `Authorization`, вставка
-файла — presigned GET-ссылкой (подставляется прямо в `src`),
-загрузка — presigned PUT через `XMLHttpRequest` (ради
-`upload.onprogress`, как и у остальных провайдеров), удаление —
-подписанным `DELETE`. И ключи, и все параметры соединения хранятся в
-`localStorage` браузера — так же, как токены/App Key у остальных
-провайдеров (см. предупреждение о `localStorage` в начале раздела
-"Настройка облачных провайдеров" выше).
+Technically, `S3Provider` (`src/providers/s3/S3Provider.ts`) signs
+every request using the **AWS Signature Version 4** protocol right in
+the browser (`src/providers/s3/sigv4.ts`, via `crypto.subtle` — no
+`aws-sdk`): `ListObjectsV2` uses the `Authorization` header, inserting
+a file uses a presigned GET link (dropped straight into `src`),
+uploading uses a presigned PUT via `XMLHttpRequest` (for
+`upload.onprogress`, same as the other providers), and deleting uses
+a signed `DELETE`. Both the keys and all connection parameters are
+stored in the browser's `localStorage` — the same as the tokens/App
+Key for the other providers (see the `localStorage` note at the start
+of "Configuring cloud providers" above).
 
-Владелец сайта тоже может предзадать соединение в коде — через тот
-же `S3Provider`, добавив его в `pluginsOpts.providers` (например,
-единый корпоративный bucket для всех посетителей, без кнопки "+" для
-него — как у Dropbox/Google/OneDrive, эта вкладка не показывает "×"):
+The site owner can also pre-configure a connection in code — through
+the same `S3Provider`, adding it to `pluginsOpts.providers` (e.g. a
+single company bucket for all visitors, with no "+" button for it —
+just like Dropbox/Google/OneDrive, this tab shows no "×"):
 
 ```ts
 import { S3Provider } from 'grapesjs-cloud-assets';
@@ -255,11 +253,11 @@ new S3Provider({
   secretAccessKey: '...',
   bucket: 'company-assets',
   region: 'us-east-1',
-  // endpoint: 'https://s3.example.com', forcePathStyle: true — для S3-совместимых сервисов
+  // endpoint: 'https://s3.example.com', forcePathStyle: true — for S3-compatible services
 });
 ```
 
-## Использование
+## Usage
 
 ```ts
 import grapesjs from 'grapesjs';
@@ -274,47 +272,48 @@ const editor = grapesjs.init({
         new DropboxProvider(),
         new GoogleDriveProvider(),
         new OneDriveProvider(),
-        // S3-совместимые хранилища обычно НЕ перечисляются тут — посетитель
-        // подключает их сам кнопкой "+" в ряду вкладок, см. README, раздел
-        // "S3-совместимые хранилища". Сюда добавляется свой S3Provider(...)
-        // только если нужен единый bucket, предзаданный владельцем сайта.
+        // S3-compatible storage usually ISN'T listed here — the visitor
+        // connects it themselves with the "+" button in the tab row, see
+        // the README section "S3-compatible storage". Add your own
+        // S3Provider(...) here only if you need a single bucket
+        // pre-configured by the site owner.
       ],
-      // необязательно:
+      // optional:
       // includeLocalTab: true,
-      // modalTitle: 'Вставить из облака',
-      // blockLabel: 'Облачные медиа',
+      // modalTitle: 'Insert from cloud',
+      // blockLabel: 'Cloud media',
       // blockCategory: 'Storage',
-      // buttonLabel: 'Вставить из облака',
+      // buttonLabel: 'Insert from cloud',
     },
   },
 });
 ```
 
-Ключ провайдера при этом в коде не фигурирует вообще — его вводит
-владелец сайта через мастер настройки, см. выше.
+The provider key doesn't appear in the code at all — the site owner
+enters it through the setup wizard, as described above.
 
-Плагин добавляет блок **"Облачные медиа"** (категория **Storage** в
-панели блоков) и кнопку на верхней панели редактора — оба открывают
-одно и то же окно выбора файла (на той вкладке, что была активна
-в прошлый раз) и вставляют подходящий компонент
-(картинку/видео/аудио/ссылку на документ) на холст.
+The plugin adds a **"Cloud media"** block (category **Storage** in
+the block panel) and a button on the editor's top panel — both open
+the same file-picker window (on whichever tab was last active) and
+insert the matching component (image/video/audio/document link) onto
+the canvas.
 
-Помимо этого общего блока, в категории **Storage** появляется ещё по
-ОТДЕЛЬНОМУ блоку на каждое уже добавленное хранилище — и заданное
-владельцем сайта через `providers` выше (Dropbox, Google Drive,
-OneDrive, "Мои файлы"), и подключённое самим посетителем через попап
-"Подключить S3" (см. раздел про S3 выше). Иконка и подпись такого
-блока — те же, что у вкладки этого хранилища в самом окне выбора.
-Клик по нему (или перетаскивание на холст) сразу открывает окно с
-АКТИВНОЙ именно этой вкладкой, а не последней использованной —
-переключиться на любую другую вкладку внутри открывшегося окна
-по-прежнему можно как обычно. Блоки S3-соединений появляются и
-пропадают из панели блоков динамически, по мере того как посетитель
-подключает/отключает их через "+" — без перезагрузки страницы.
+Alongside that shared block, the **Storage** category also gets a
+SEPARATE block for each already-configured storage — both the ones
+the site owner set via `providers` above (Dropbox, Google Drive,
+OneDrive, "My files") and the ones the visitor connected themselves
+through the "Connect S3" popup (see the S3 section above). Such a
+block's icon and label match that storage's tab in the picker window
+itself. Clicking it (or dragging it onto the canvas) immediately opens
+the window with THAT tab active, rather than the last one used —
+switching to any other tab inside the opened window still works as
+usual. Blocks for S3 connections appear and disappear from the block
+panel dynamically, as the visitor connects/disconnects them via "+" —
+with no page reload needed.
 
-## Добавление нового провайдера
+## Adding a new provider
 
-Реализуйте `StorageProvider` (`src/types.ts`):
+Implement `StorageProvider` (`src/types.ts`):
 
 ```ts
 export class MyProvider implements StorageProvider {
@@ -327,117 +326,115 @@ export class MyProvider implements StorageProvider {
   disconnect() { /* ... */ }
   list(folderPath, opts) { /* ... */ }
   resolve(item) { /* ... */ }
-  // upload?, search?, addByUrl? — опционально
+  // upload?, search?, addByUrl? — optional
 }
 ```
 
-`AssetBrowser` больше ничего не знает про конкретное хранилище —
-он вызывает только эти методы. Это тот самый единый интерфейс,
-который позволяет добавлять хранилища без изменений в UI.
+`AssetBrowser` doesn't know anything else about a specific storage
+provider — it only calls these methods. That's the shared interface
+that lets new storage providers be added without any UI changes.
 
-Если провайдеру, как Dropbox, нужен собственный App Key/Client ID,
-которым нельзя поделиться между чужими доменами, реализуйте ещё
-`getSetupInfo()` (шаги мастера настройки, см. `ProviderSetupInfo` в
-`src/types.ts`) и `setCredential(value)` (сохранить/сбросить ключ) и
-выставляйте `getAuthState().configured = false`, пока ключа нет —
-`AssetBrowser` сам покажет мастер вместо кнопки "Войти", как это
-устроено в `DropboxProvider`.
+If a provider needs its own App Key/Client ID that can't be shared
+across third-party domains, like Dropbox, also implement
+`getSetupInfo()` (the setup wizard's steps, see `ProviderSetupInfo` in
+`src/types.ts`) and `setCredential(value)` (save/reset the key), and
+have `getAuthState().configured = false` until a key exists —
+`AssetBrowser` will show the wizard instead of the "Log in" button on
+its own, the same way `DropboxProvider` does it.
 
-## Локализация
+## Localization
 
-Весь текст интерфейса плагина (вкладки, кнопки, пустые состояния,
-мастер настройки Dropbox, сообщения об ошибках) переведён на все
-**22 языка, которые поддерживает сама GrapesJS** (`grapesjs/locale`:
-ar, bs, ca, de, el, en, es, fa, fr, he, id, it, ko, nb, nl, pl, pt,
-ru, se, tr, vi, zh) — см. `src/i18n/locales/`.
+All of the plugin's UI text (tabs, buttons, empty states, the
+Dropbox setup wizard, error messages) is translated into all **22
+languages GrapesJS itself supports** (`grapesjs/locale`: ar, bs, ca,
+de, el, en, es, fa, fr, he, id, it, ko, nb, nl, pl, pt, ru, se, tr,
+vi, zh) — see `src/i18n/locales/`.
 
-Ничего отдельно настраивать не нужно. Плагин регистрирует свой
-каталог переводов в `editor.I18n` под ключом `cloudAssets`
-(`registerI18n()` в `src/index.ts`, вызывается первым делом), а
-дальше язык подхватывается тем же механизмом, что и у самого
-GrapesJS: по умолчанию — язык браузера посетителя
-(`i18n.detectLocale`, включено в GrapesJS по умолчанию), либо явно
-заданный `i18n.locale` в конфигурации редактора. Если у посетителя
-язык, которого нет в списке выше, плагин откатывается на английский
-(`localeFallback`) — так же, как и ядро GrapesJS.
+Nothing needs to be configured separately. The plugin registers its
+own translation catalog with `editor.I18n` under the `cloudAssets`
+key (`registerI18n()` in `src/index.ts`, called first thing), and
+from there the language is picked up by the same mechanism as
+GrapesJS itself: by default, the visitor's browser language
+(`i18n.detectLocale`, enabled by default in GrapesJS), or an
+explicit `i18n.locale` set in the editor config. If a visitor's
+language isn't in the list above, the plugin falls back to English
+(`localeFallback`) — same as GrapesJS core.
 
-Технические термины и точные названия полей/кнопок в консолях
-Dropbox, Google Cloud и Azure Portal (App Key, Client ID,
+Technical terms and exact field/button names from the Dropbox,
+Google Cloud, and Azure Portal consoles (App Key, Client ID,
 Application (client) ID, Scoped access, Full Dropbox,
 files.metadata.read, Settings, Permissions, Redirect URIs, Create
 app, Submit, Add, APIs & Services, OAuth consent screen, Web
 application, Authorized JavaScript origins, Microsoft Entra ID, App
 registrations, Single-page application, Files.ReadWrite,
-offline_access, Ctrl+C и т.п.) намеренно оставлены на английском во
-всех языках — это не текст плагина, а подписи в самих консолях
-провайдеров, и "переводить" их означало бы не помогать, а сбивать с
-толку, ведь на экране пользователя они всё равно останутся
-английскими.
+offline_access, Ctrl+C, etc.) are deliberately left in English across
+every language — they aren't the plugin's own text, but labels in the
+providers' own consoles, and "translating" them would only confuse
+users, since they'll stay in English on screen either way.
 
-Переопределить отдельную строку (например, поправить перевод или
-изменить формулировку под свой сайт) можно, вызвав
-`editor.I18n.addMessages(...)` **после** инициализации редактора
-(например, в обработчике `editor.on('load', ...)`), заменив нужный
-путь внутри `cloudAssets`:
+A single string can be overridden (e.g. to tweak a translation or
+its wording for your site) by calling `editor.I18n.addMessages(...)`
+**after** the editor is initialized (e.g. in an `editor.on('load', ...)`
+handler), replacing the relevant path inside `cloudAssets`:
 
 ```ts
 editor.on('load', () => {
   editor.I18n.addMessages({
-    ru: { cloudAssets: { auth: { loginButton: 'Войти' } } },
+    en: { cloudAssets: { auth: { loginButton: 'Sign in' } } },
   });
 });
 ```
 
-Дописать язык, которого нет в списке GrapesJS, или полностью заменить
-чужой перевод под свой бренд, можно тем же способом — `addMessages()`
-сливается по ключам, а не заменяет каталог целиком.
+A language missing from the GrapesJS list can be added, or someone
+else's translation fully replaced with your own brand's wording, the
+same way — `addMessages()` merges by key rather than replacing the
+whole catalog.
 
-Собственные провайдеры (см. "Добавление нового провайдера" ниже)
-подключаются к этой же системе через `getSetupInfo()` — шаг мастера
-настройки может либо задать готовый `text` на одном языке, либо
-`i18nKey`/`i18nParams`, который `AssetBrowser` переведёт так же, как
-и встроенные строки (см. `ProviderSetupStep` в `src/types.ts` и как
-это сделано в `DropboxProvider.getSetupInfo()`).
+Custom providers (see "Adding a new provider" below) plug into the
+same system through `getSetupInfo()` — a wizard step can either
+supply a ready `text` in a single language, or an `i18nKey`/
+`i18nParams` pair that `AssetBrowser` will translate the same way as
+its built-in strings (see `ProviderSetupStep` in `src/types.ts` and
+how `DropboxProvider.getSetupInfo()` does it).
 
-## Статус
+## Status
 
-- [x] "Свои файлы" — локальный источник (загрузка с диска, вставка по URL, уже добавленные ассеты)
-- [x] Dropbox (Files API v2, OAuth PKCE, без Chooser)
-- [x] Google Drive (Drive API v3, Google Identity Services "Token client", без Picker)
-- [x] Microsoft OneDrive (Microsoft Graph API, OAuth PKCE на SPA-платформе, без File Picker)
-- [x] Локализация интерфейса на все 22 языка, что поддерживает GrapesJS
-- [x] Два вида списка файлов — плитка и таблица (с колонками имя/тип/размер/дата изменения), выбор сохраняется в localStorage
-- [x] Определение типа файла (изображение/видео/аудио/документ/папка/прочее) — своя иконка на каждый тип вместо одной общей
-- [x] Превью-миниатюры для изображений: у "Своих файлов" — сразу; у Dropbox — через `files/get_thumbnail_batch` (до 25 файлов за раз); у OneDrive — через `$expand=thumbnails` прямо в запросе списка (без отдельного round-trip); у Google Drive — авторизованный fetch каждого `thumbnailLink` с ограниченной параллельностью. Везде best effort — не мешает работе списка, если не получилось, просто останется иконка по типу
-- [x] AWS S3 / S3-совместимые (MinIO, R2, Wasabi, DO Spaces...) — подключается самим посетителем кнопкой "+" в ряду вкладок, без OAuth и без участия владельца сайта, см. "S3-совместимые хранилища" выше
-- [x] Адаптивный ряд вкладок — то, что не помещается по ширине, прячется за шевроном "ещё вкладки"
-- [x] По отдельному блоку в Block Manager (категория Storage) на каждое уже добавленное хранилище — клик сразу открывает нужную вкладку, S3-соединения синхронизируются динамически
-- [ ] iCloud — отложено, у Apple нет публичного API для этого (см. документ анализа проекта)
+- [x] "My files" — the local source (upload from disk, insert by URL, already-added assets)
+- [x] Dropbox (Files API v2, OAuth PKCE, no Chooser)
+- [x] Google Drive (Drive API v3, Google Identity Services "Token client", no Picker)
+- [x] Microsoft OneDrive (Microsoft Graph API, OAuth PKCE on the SPA platform, no File Picker)
+- [x] UI localized into all 22 languages GrapesJS supports
+- [x] Two file-list views — grid and table (with name/type/size/modified columns); the choice is saved to localStorage
+- [x] File type detection (image/video/audio/document/folder/other) — its own icon per type instead of one generic icon
+- [x] Preview thumbnails for images: "My files" — immediately; Dropbox — via `files/get_thumbnail_batch` (up to 25 files per batch); OneDrive — via `$expand=thumbnails` right in the list request (no extra round trip); Google Drive — an authenticated fetch of each `thumbnailLink` with limited parallelism. Everywhere it's best effort — doesn't block the list from working if it fails, it just falls back to the type icon
+- [x] AWS S3 / S3-compatible storage (MinIO, R2, Wasabi, DO Spaces...) — connected by the visitor themselves with the "+" button in the tab row, with no OAuth and no involvement from the site owner, see "S3-compatible storage" above
+- [x] Adaptive tab row — whatever doesn't fit is hidden behind a "more tabs" chevron
+- [x] A separate Block Manager block (category Storage) for each already-configured storage — clicking it opens the matching tab directly, S3 connections sync dynamically
+- [ ] iCloud — deferred, Apple has no public API for this (see the project's analysis document)
 
-Известные ограничения MVP:
+Known MVP limitations:
 
-- **Google Drive: вставка файлов ограничена 10 МБ.** У Drive REST
-  API нет способа отдать embeddable-ссылку на приватный файл без
-  собственного backend'а — плагин вместо этого скачивает файл и
-  вставляет его как `data:` URL, что не годится для крупных файлов
-  (видео и т.п.). Подробности — в README, раздел "Google Drive", и
-  в doc-комментарии `GoogleDriveProvider`.
-- **Google Drive и Dropbox — "чувствительные" scopes/тип
-  приложения.** Оба провайдера при большом количестве пользователей
-  потребуют прохождения ревью/верификации в консоли провайдера —
-  без него вход работает только для аккаунтов, явно добавленных
-  автором приложения (test users у Google).
-- **OneDrive: срок жизни ссылки на вставленный файл не документирован
-  Microsoft** — провайдер закладывает консервативный час
-  (`expiresAt`), реальный TTL может отличаться.
-- Компонент-плейсхолдер, который блок вставляет при перетаскивании
-  на холст (см. `src/canvas/block.ts`), открывает окно выбора заново
-  при каждом своём создании — если undo вернёт только что удалённый
-  плейсхолдер обратно, окно откроется повторно. Редкий сценарий (сам
-  плейсхолдер живёт на холсте доли секунды) и ничего не ломает,
-  но пока не обработан отдельно.
+- **Google Drive: file inserts are capped at 10 MB.** The Drive REST
+  API has no way to hand back an embeddable link to a private file
+  without a backend of your own — instead, the plugin downloads the
+  file and inserts it as a `data:` URL, which doesn't work for large
+  files (video, etc.). See the README's "Google Drive" section and
+  the `GoogleDriveProvider` doc comment for details.
+- **Google Drive and Dropbox use "sensitive" scopes/app types.**
+  Both providers will require review/verification in their console
+  at scale — without it, sign-in only works for accounts the app's
+  author explicitly added (Google's test users).
+- **OneDrive: the lifetime of an inserted file's link isn't
+  documented by Microsoft** — the provider assumes a conservative
+  one hour (`expiresAt`), but the real TTL may differ.
+- The placeholder component a block inserts when dragged onto the
+  canvas (see `src/canvas/block.ts`) reopens the picker window every
+  time it's created — if undo brings back a just-deleted placeholder,
+  the window opens again. A rare scenario (the placeholder itself
+  only lives on the canvas for a fraction of a second) and doesn't
+  break anything, but isn't specifically handled yet.
 
-## Разработка
+## Development
 
 ```bash
 npm install
