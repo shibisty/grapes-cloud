@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'Organisasi akun Microsoft ini tidak memiliki lisensi OneDrive/SharePoint (Microsoft Graph: "Tenant does not have a SPO license"). Masuk dengan akun Microsoft pribadi (outlook.com/hotmail/live) atau akun kerja yang organisasinya telah mengaktifkan OneDrive for Business.',
       noDownloadableContent:
         '"{name}" tidak memiliki konten yang dapat diunduh — biasanya ini adalah notebook OneNote atau jenis item lain yang tidak dapat disajikan OneDrive sebagai file biasa.',
+      downloadUrlUnavailable:
+        '"{name}" belum memiliki tautan unduhan — ini bisa terjadi tepat setelah mengunggah, atau jika organisasi Anda memblokir pengunduhan file ini. Coba lagi sebentar lagi.',
       uploadFailed: 'OneDrive: unggah gagal (status {status})',
       uploadNetworkError: 'OneDrive: kesalahan jaringan saat mengunggah file',
     },

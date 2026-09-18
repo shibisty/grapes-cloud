@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'مؤسسة حساب Microsoft هذا لا تملك ترخيصًا لـ OneDrive/SharePoint (Microsoft Graph: «Tenant does not have a SPO license»). سجّل الدخول بحساب Microsoft شخصي (outlook.com/hotmail/live) أو بحساب عمل فعّلت مؤسسته OneDrive for Business.',
       noDownloadableContent:
         '«{name}» لا يحتوي على محتوى قابل للتنزيل — وعادةً ما يكون هذا دفتر OneNote أو نوع عنصر آخر لا يستطيع OneDrive تقديمه كملف عادي.',
+      downloadUrlUnavailable:
+        '«{name}» ليس له رابط تنزيل حتى الآن — يمكن أن يحدث ذلك مباشرة بعد الرفع، أو إذا كانت مؤسستك تحظر تنزيل هذا الملف. حاول مرة أخرى بعد قليل.',
       uploadFailed: 'OneDrive: فشل الرفع (الحالة {status})',
       uploadNetworkError: 'OneDrive: خطأ في الشبكة أثناء رفع الملف',
     },

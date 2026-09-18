@@ -1,7 +1,5 @@
 # grapesjs-cloud-assets
 
-[![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/cw/shibisty)
-
 A GrapesJS plugin: insert images, video, audio and documents from
 cloud storage through a single shared UI with tabs. The first tab is
 **"My files"** (the local source: assets already added to the
@@ -35,7 +33,7 @@ Architectural decisions (important for future maintenance):
   editor-wide slot: if the site has another plugin that also needs
   its own Asset Manager UI, they silently overwrite each other on
   init — a conflict that's hard to even diagnose. So this plugin has
-  its own, fully separate entry point: the **"Cloud media"** block
+  its own, fully separate entry point: one block per storage
   (category **Storage** in the Block Manager) and a top-panel
   button — both open the same window (`src/canvas/picker.ts`) via
   `editor.Modal`, the editor's shared modal stack, not a resource
@@ -282,8 +280,8 @@ const editor = grapesjs.init({
       ],
       // optional:
       // includeLocalTab: true,
-      // modalTitle: 'Insert from cloud',
-      // blockLabel: 'Cloud media',
+      // modalTitle: 'Insert from cloud', // title of the toolbar button's modal
+      // blockLabel: 'Cloud media', // deprecated, no longer used — see src/types.ts
       // blockCategory: 'Storage',
       // buttonLabel: 'Insert from cloud',
     },
@@ -294,24 +292,30 @@ const editor = grapesjs.init({
 The provider key doesn't appear in the code at all — the site owner
 enters it through the setup wizard, as described above.
 
-The plugin adds a **"Cloud media"** block (category **Storage** in
-the block panel) and a button on the editor's top panel — both open
-the same file-picker window (on whichever tab was last active) and
-insert the matching component (image/video/audio/document link) onto
-the canvas.
+The plugin adds a button on the editor's top panel, plus one block
+per already-configured storage in the **Storage** category of the
+block panel — both the ones the site owner set via `providers` above
+(Dropbox, Google Drive, OneDrive, "My files") and the ones the
+visitor connected themselves through the "Connect S3" popup (see the
+S3 section above). All of them open the same file-picker window
+(`src/canvas/picker.ts`) and insert the matching component
+(image/video/audio/document link) onto the canvas.
 
-Alongside that shared block, the **Storage** category also gets a
-SEPARATE block for each already-configured storage — both the ones
-the site owner set via `providers` above (Dropbox, Google Drive,
-OneDrive, "My files") and the ones the visitor connected themselves
-through the "Connect S3" popup (see the S3 section above). Such a
-block's icon and label match that storage's tab in the picker window
-itself. Clicking it (or dragging it onto the canvas) immediately opens
-the window with THAT tab active, rather than the last one used —
-switching to any other tab inside the opened window still works as
-usual. Blocks for S3 connections appear and disappear from the block
-panel dynamically, as the visitor connects/disconnects them via "+" —
-with no page reload needed.
+A block's icon and label match that storage's tab in the picker
+window itself. Clicking it (or dragging it onto the canvas)
+immediately opens the window with THAT tab active — switching to any
+other tab inside the opened window still works as usual. Blocks for
+S3 connections appear and disappear from the block panel dynamically,
+as the visitor connects/disconnects them via "+" — with no page
+reload needed.
+
+Earlier versions also had a separate "Cloud media" block that opened
+the picker on whichever tab was last active. It was removed: since
+one of the per-storage blocks (typically "My files"/Local) already
+opens the very same window, having both looked like two identical
+buttons at the top of the **Storage** section. The top-panel button
+still behaves the old way — it opens on the last active tab — since
+it isn't duplicated by anything else in the UI.
 
 ## Adding a new provider
 
@@ -443,7 +447,3 @@ npm install
 npm run typecheck
 npm run build   # dist/grapesjs-cloud-assets.js (ESM) + .umd.cjs
 ```
-
-[![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/cw/shibisty)
-
-If this project helps you, consider supporting its development on Patreon ❤️

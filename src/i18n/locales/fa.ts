@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'سازمانِ این حساب Microsoft مجوز OneDrive/SharePoint را ندارد (Microsoft Graph: «Tenant does not have a SPO license»). با یک حساب شخصی Microsoft (outlook.com/hotmail/live) یا یک حساب کاری که سازمان آن OneDrive for Business را فعال کرده است وارد شوید.',
       noDownloadableContent:
         '«{name}» محتوای قابل دانلودی ندارد — این معمولاً مربوط به یک دفترچه OneNote یا نوع دیگری از مورد است که OneDrive نمی‌تواند آن را به‌صورت یک فایل عادی ارائه دهد.',
+      downloadUrlUnavailable:
+        '«{name}» هنوز پیوند دانلودی ندارد — این ممکن است بلافاصله بعد از بارگذاری فایل رخ دهد، یا اگر سازمان شما دانلود این فایل را مسدود کرده باشد. کمی بعد دوباره تلاش کنید.',
       uploadFailed: 'OneDrive: بارگذاری ناموفق بود (وضعیت {status})',
       uploadNetworkError: 'OneDrive: خطای شبکه هنگام بارگذاری فایل',
     },

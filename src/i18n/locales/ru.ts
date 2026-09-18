@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'У организации этого аккаунта Microsoft не лицензирован OneDrive/SharePoint (Microsoft Graph: «Tenant does not have a SPO license»). Войдите под личным аккаунтом Microsoft (outlook.com/hotmail/live) или под рабочим аккаунтом, в организации которого включён OneDrive for Business.',
       noDownloadableContent:
         '«{name}» нельзя вставить — обычно так бывает у блокнотов OneNote или у других элементов, которые OneDrive не может отдать как обычный файл.',
+      downloadUrlUnavailable:
+        '«{name}» пока не получил ссылку для скачивания — это может быть сразу после загрузки файла, или если организация запрещает его скачивание. Попробуйте ещё раз через некоторое время.',
       uploadFailed: 'OneDrive: загрузка не удалась (код {status})',
       uploadNetworkError: 'OneDrive: сетевая ошибка при загрузке файла',
     },

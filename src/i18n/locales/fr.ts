@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'L’organisation de ce compte Microsoft n’a pas de licence OneDrive/SharePoint (Microsoft Graph : « Tenant does not have a SPO license »). Connectez-vous avec un compte Microsoft personnel (outlook.com/hotmail/live) ou avec un compte professionnel dont l’organisation a activé OneDrive for Business.',
       noDownloadableContent:
         '« {name} » n’a pas de contenu téléchargeable — il s’agit généralement d’un bloc-notes OneNote ou d’un autre type d’élément qu’OneDrive ne peut pas fournir comme fichier normal.',
+      downloadUrlUnavailable:
+        '« {name} » n’a pas encore de lien de téléchargement — cela peut arriver juste après l’envoi du fichier, ou si votre organisation bloque son téléchargement. Réessayez dans un instant.',
       uploadFailed: 'OneDrive : échec de l’envoi (statut {status})',
       uploadNetworkError: 'OneDrive : erreur réseau lors de l’envoi du fichier',
     },

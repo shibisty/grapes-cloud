@@ -177,6 +177,8 @@ const messages: CloudAssetsMessages = {
         "This Microsoft account's organization does not have OneDrive/SharePoint licensed (Microsoft Graph: \"Tenant does not have a SPO license\"). Sign in with a personal Microsoft account (outlook.com/hotmail/live) or a work account whose organization has OneDrive for Business enabled.",
       noDownloadableContent:
         '"{name}" has no downloadable content — this is usually a OneNote notebook or another item type OneDrive cannot serve as a plain file.',
+      downloadUrlUnavailable:
+        '"{name}" doesn\'t have a download link yet — this can happen right after uploading, or if your organization blocks downloading this file. Please try again in a moment.',
       uploadFailed: 'OneDrive: upload failed (status {status})',
       uploadNetworkError: 'OneDrive: network error while uploading the file',
     },

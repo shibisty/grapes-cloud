@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'Organisasjonen til denne Microsoft-kontoen har ikke OneDrive/SharePoint lisensiert (Microsoft Graph: «Tenant does not have a SPO license»). Logg inn med en personlig Microsoft-konto (outlook.com/hotmail/live) eller en jobbkonto der organisasjonen har OneDrive for Business aktivert.',
       noDownloadableContent:
         '«{name}» har ikke nedlastbart innhold og kan ikke settes inn — dette skjer som regel med OneNote-notatblokker eller andre elementtyper som OneDrive ikke kan levere som en vanlig fil.',
+      downloadUrlUnavailable:
+        '«{name}» har ikke fått en nedlastingslenke ennå — dette kan skje like etter opplasting, eller hvis organisasjonen din blokkerer nedlasting av denne filen. Prøv igjen om litt.',
       uploadFailed: 'OneDrive: opplasting mislyktes (status {status})',
       uploadNetworkError: 'OneDrive: nettverksfeil under opplasting av filen',
     },

@@ -663,7 +663,7 @@ export class AssetBrowser {
       const tab = document.createElement('button');
       tab.type = 'button';
       tab.className = 'gca-tab' + (provider.id === this.activeProviderId ? ' gca-tab--active' : '') + (removable ? ' gca-tab--removable' : '');
-      tab.innerHTML = `<span class="gca-tab__icon">${provider.icon}</span><span>${escapeHtml(provider.label)}</span>`;
+      tab.innerHTML = `<span class="gca-tab__icon">${provider.icon}</span><span class="gca-tab__label">${escapeHtml(provider.label)}</span>`;
       tab.addEventListener('click', () => this.switchProvider(provider.id));
       wrap.appendChild(tab);
 

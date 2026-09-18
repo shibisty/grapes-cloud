@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'Tổ chức của tài khoản Microsoft này chưa được cấp phép OneDrive/SharePoint (Microsoft Graph: "Tenant does not have a SPO license"). Hãy đăng nhập bằng tài khoản Microsoft cá nhân (outlook.com/hotmail/live) hoặc tài khoản công việc mà tổ chức đã bật OneDrive for Business.',
       noDownloadableContent:
         '"{name}" không có nội dung để tải xuống nên không thể chèn — trường hợp này thường gặp ở sổ tay OneNote hoặc các loại mục khác mà OneDrive không thể cung cấp dưới dạng tệp thông thường.',
+      downloadUrlUnavailable:
+        '"{name}" chưa có liên kết tải xuống — điều này có thể xảy ra ngay sau khi tải lên, hoặc nếu tổ chức của bạn chặn việc tải xuống tệp này. Vui lòng thử lại sau một chút.',
       uploadFailed: 'OneDrive: tải lên không thành công (trạng thái {status})',
       uploadNetworkError: 'OneDrive: lỗi mạng khi tải tệp lên',
     },

@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'Die Organisation dieses Microsoft-Kontos hat OneDrive/SharePoint nicht lizenziert (Microsoft Graph: „Tenant does not have a SPO license“). Melden Sie sich mit einem privaten Microsoft-Konto (outlook.com/hotmail/live) an oder mit einem Geschäftskonto, dessen Organisation OneDrive for Business aktiviert hat.',
       noDownloadableContent:
         '„{name}“ hat keinen herunterladbaren Inhalt – dabei handelt es sich meist um ein OneNote-Notizbuch oder einen anderen Elementtyp, den OneDrive nicht als normale Datei bereitstellen kann.',
+      downloadUrlUnavailable:
+        '„{name}“ hat noch keinen Download-Link – das kann direkt nach dem Hochladen passieren oder wenn Ihre Organisation das Herunterladen dieser Datei blockiert. Bitte versuchen Sie es in Kürze erneut.',
       uploadFailed: 'OneDrive: Hochladen fehlgeschlagen (Status {status})',
       uploadNetworkError: 'OneDrive: Netzwerkfehler beim Hochladen der Datei',
     },

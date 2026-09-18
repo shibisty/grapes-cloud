@@ -235,12 +235,24 @@ export interface CloudAssetsMessages {
        */
       noSpoLicense: string;
       /**
-       * У элемента нет `@microsoft.graph.downloadUrl` — обычно это
-       * "пакет" вроде блокнота OneNote, либо ярлык на чужой файл,
-       * содержимое которого не удалось получить даже из его
-       * настоящего drive. {name} — имя элемента.
+       * У элемента нет `@microsoft.graph.downloadUrl`, и у него ТОЧНО
+       * нет facet'а `file` (значит это папка/"пакет" вроде блокнота
+       * OneNote/ярлык, содержимое которого не удалось получить даже
+       * из его настоящего drive) — повторные попытки бессмысленны, см.
+       * `OneDriveProvider.resolve()`. {name} — имя элемента.
        */
       noDownloadableContent: string;
+      /**
+       * У элемента ЕСТЬ facet `file` (это обычный файл, не папка и не
+       * пакет), но `@microsoft.graph.downloadUrl` так и не появился
+       * даже после нескольких повторных запросов метаданных — Graph
+       * иногда досчитывает это поле лениво после недавней загрузки/
+       * копирования файла (задокументированное поведение), но постоянное
+       * отсутствие может значить и то, что скачивание файла заблокировано
+       * политикой организации (метки конфиденциальности, DLP и т.п.).
+       * {name} — имя элемента. См. `OneDriveProvider.resolve()`.
+       */
+      downloadUrlUnavailable: string;
       /** {status} — HTTP-код ответа. */
       uploadFailed: string;
       uploadNetworkError: string;

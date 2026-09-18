@@ -81,6 +81,37 @@ interface GraphDriveItem {
   /** Ссылка на просмотр элемента в office.com/OneDrive-вебе — для контекстного меню "Открыть в отдельной вкладке". */
   webUrl?: string;
   '@microsoft.graph.downloadUrl'?: string;
+  /**
+   * Обходной путь для конкретного диагностированного случая (см. п.15
+   * истории проекта): у файла с facet'ом `shared` (личный OneDrive,
+   * элемент расшарен самим владельцем) `@microsoft.graph.downloadUrl`
+   * стабильно отсутствовал даже после ретраев, хотя `file`-facet и
+   * хеши контента присутствовали (не гонка, не malware/package —
+   * все эти причины были продиагностированы и исключены). Это
+   * совпадает с задокументированным на Microsoft Q&A поведением:
+   * аннотационное свойство `@microsoft.graph.downloadUrl` в `$select`
+   * ненадёжно именно для расшаренных элементов, а РАБОЧАЯ (хоть и не
+   * описанная в официальной REST-документации) альтернатива —
+   * запросить вложенное свойство `content.downloadUrl` тем же
+   * `$select` — оно возвращается как `{ content: { downloadUrl } }`.
+   * НЕ официально документировано Microsoft — используется только как
+   * fallback, ПОСЛЕ основного `@microsoft.graph.downloadUrl` и после
+   * ретраев, а не вместо него.
+   */
+  content?: { downloadUrl?: string };
+  // Ниже — только диагностические facet'ы, запрашиваемые ДОПОЛНИТЕЛЬНО
+  // в resolve() (см. DIAGNOSTIC_SELECT_FIELDS), но не в list()/search():
+  // сами по себе они на логику не влияют, только логируются в
+  // console.error при ошибке downloadUrlUnavailable/noDownloadableContent,
+  // чтобы при следующем таком случае не гадать вслепую, а увидеть
+  // реальную причину (see resolve()).
+  /** "OneNote"/"oneDrive" и т.п. — если есть, элемент точно НЕ обычный файл, даже если `file` тоже присутствует. */
+  package?: { type?: string };
+  /** Присутствует, если Graph считает файл заражённым/подозрительным — тогда скачивание блокируется намеренно. */
+  malware?: { description?: string };
+  /** Есть, если элемент — ярлык/доступ "Поделились со мной" (не то же самое, что `remoteItem` — тот именно "Добавить ярлык в OneDrive"). */
+  shared?: { scope?: string; owner?: unknown };
+  parentReference?: { driveId?: string; driveType?: string };
 }
 
 const SELECT_FIELDS = 'id,name,size,lastModifiedDateTime,file,folder,remoteItem,webUrl';
@@ -88,6 +119,23 @@ const SELECT_FIELDS = 'id,name,size,lastModifiedDateTime,file,folder,remoteItem,
 interface GraphChildrenResponse {
   value: GraphDriveItem[];
   '@odata.nextLink'?: string;
+}
+
+/**
+ * `@microsoft.graph.downloadUrl` — основной, документированный
+ * источник ссылки; `content.downloadUrl` — недокументированный,
+ * но эмпирически рабочий fallback именно для случая, который
+ * `@microsoft.graph.downloadUrl` не покрывает (см. комментарий у
+ * `GraphDriveItem.content`). Централизовано в одну функцию, чтобы
+ * и основной путь в `resolve()`, и условие остановки ретраев в
+ * `fetchItemMetadataWithRetry()` не могли рассинхронизироваться —
+ * иначе легко получить баг "перестал ретраить, потому что
+ * @microsoft.graph.downloadUrl пуст, хотя content.downloadUrl уже
+ * пришёл", то есть лишний ретрай ради поля, которое проверяется
+ * дальше в другом месте.
+ */
+function extractDownloadUrl(json: GraphDriveItem): string | undefined {
+  return json['@microsoft.graph.downloadUrl'] ?? json.content?.downloadUrl;
 }
 
 function defaultRedirectUri(): string | null {
@@ -392,7 +440,18 @@ export class OneDriveProvider implements StorageProvider {
     // на всякий случай перезапрашиваем метаданные свежими, а не
     // полагаемся на то, что уже могло устареть с момента списка.
     const token = await this.ensureAccessToken();
-    const params = new URLSearchParams({ $select: 'id,name,file,remoteItem,@microsoft.graph.downloadUrl' });
+    // Диагностические facet'ы (package/malware/shared/parentReference) —
+    // см. комментарий у них в GraphDriveItem — не влияют на логику ниже,
+    // только на то, что попадёт в console.error при ошибке. `content.
+    // downloadUrl` — доп. запасной путь к ссылке (см. комментарий у
+    // GraphDriveItem.content) для конкретного диагностированного случая:
+    // расшаренный (`shared`-facet) элемент личного OneDrive, у которого
+    // `@microsoft.graph.downloadUrl` стабильно не приходит даже после
+    // ретраев, хотя `content.downloadUrl` в том же ответе — приходит.
+    const params = new URLSearchParams({
+      $select:
+        'id,name,size,file,folder,remoteItem,package,malware,shared,parentReference,@microsoft.graph.downloadUrl,content.downloadUrl',
+    });
 
     // Ярлык на файл из чужого OneDrive/SharePoint физически лежит в
     // другом drive — /me/drive/items/{id} для него не отдаёт
@@ -405,16 +464,50 @@ export class OneDriveProvider implements StorageProvider {
         ? `${GRAPH_URL}/drives/${encodeURIComponent(remote.parentReference.driveId)}/items/${encodeURIComponent(remote.id)}`
         : `${GRAPH_URL}/me/drive/items/${encodeURIComponent(item.path)}`;
 
-    const res = await fetch(`${endpoint}?${params.toString()}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (!res.ok) await this.throwGraphError(res);
-    const json = (await res.json()) as GraphDriveItem;
-    const downloadUrl = json['@microsoft.graph.downloadUrl'];
+    const json = await this.fetchItemMetadataWithRetry(endpoint, params, token);
+    const downloadUrl = extractDownloadUrl(json);
+
     if (!downloadUrl) {
-      // Остальные причины отсутствия содержимого (не ярлык, но всё
-      // равно нет downloadUrl) — обычно "пакеты" вроде блокнотов
-      // OneNote, у которых нет единого бинарного содержимого.
+      if (json.file) {
+        // У элемента ТОЧНО есть facet `file` — это обычный файл, не
+        // папка/пакет, и мы уже подождали и переспросили (см.
+        // fetchItemMetadataWithRetry) на случай, если Graph просто не
+        // успел досчитать это поле сразу после загрузки/копирования
+        // файла (задокументированное поведение самой команды OneDrive,
+        // см. github.com/OneDrive/onedrive-api-docs issue #1258).
+        // Если ссылки всё равно нет — скорее всего постоянная причина
+        // (политика организации/метка конфиденциальности блокирует
+        // скачивание), а не гонка, но мы не можем отличить одно от
+        // другого отсюда — сообщение упоминает оба варианта. Логируем
+        // диагностические facet'ы (см. GraphDriveItem) логируем через
+        // console.error (не console.warn!) — у части пользователей
+        // консоль браузера по умолчанию отфильтровывает уровень
+        // "Warnings" и показывает только "Errors", из-за чего первая
+        // версия этого лога (на console.warn) не попадала в репорт
+        // пользователя, хотя выполнялась. console.error гарантированно
+        // виден везде, где виден и сам throw ниже (его тоже логируют
+        // через console.error — см. дефолтный onError в AssetBrowser).
+        // При повторении этой ошибки открыть DevTools и посмотреть эти
+        // данные РЕЗКО сокращает следующий цикл диагностики.
+        console.error(
+          `[grapesjs-cloud-assets] OneDrive item "${item.name}" has a "file" facet but no @microsoft.graph.downloadUrl even after retrying — diagnostic metadata:`,
+          json,
+        );
+        throw new GcaError(
+          'microsoft.error.downloadUrlUnavailable',
+          `Microsoft Graph: item "${item.name}" has no download link yet (no @microsoft.graph.downloadUrl even though it has a file content) — this can happen right after upload, or if the organization blocks downloading it.`,
+          { name: item.name },
+        );
+      }
+      // Нет facet'а `file` вообще — это папка/"пакет" вроде блокнота
+      // OneNote, у которого нет единого бинарного содержимого. Тут
+      // повторные попытки бессмысленны (fetchItemMetadataWithRetry их
+      // и не делает в этом случае). console.error — см. комментарий
+      // в ветке выше про то, почему не console.warn.
+      console.error(
+        `[grapesjs-cloud-assets] OneDrive item "${item.name}" has no "file" facet (likely folder/package) and no @microsoft.graph.downloadUrl — diagnostic metadata:`,
+        json,
+      );
       throw new GcaError(
         'microsoft.error.noDownloadableContent',
         `Microsoft Graph: item "${item.name}" has no downloadable content (likely a OneNote notebook or another unsupported item type).`,
@@ -431,6 +524,38 @@ export class OneDriveProvider implements StorageProvider {
       // Точный TTL не документирован Microsoft — берём консервативный час.
       expiresAt: Date.now() + 60 * 60 * 1000,
     };
+  }
+
+  /**
+   * `@microsoft.graph.downloadUrl` у СВЕЖЕ загруженного/скопированного
+   * файла иногда отсутствует в первом ответе Graph — по словам самой
+   * команды OneDrive, часть метаданных досчитывается лениво "после
+   * первых попыток скачивания" (github.com/OneDrive/onedrive-api-docs
+   * issue #1258), и повторный запрос через мгновение обычно уже
+   * отдаёт её. Ретраим ТОЛЬКО когда у элемента есть facet `file` — то
+   * есть это точно обычный файл, а не папка/пакет (для них ссылки не
+   * появится в принципе, лишние запросы только замедлят и без того
+   * гарантированную ошибку).
+   */
+  private async fetchItemMetadataWithRetry(endpoint: string, params: URLSearchParams, token: string): Promise<GraphDriveItem> {
+    const retryDelaysMs = [400, 900];
+    let json = await this.fetchItemMetadata(endpoint, params, token);
+
+    for (const delayMs of retryDelaysMs) {
+      if (extractDownloadUrl(json) || !json.file) break;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+      json = await this.fetchItemMetadata(endpoint, params, token);
+    }
+
+    return json;
+  }
+
+  private async fetchItemMetadata(endpoint: string, params: URLSearchParams, token: string): Promise<GraphDriveItem> {
+    const res = await fetch(`${endpoint}?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) await this.throwGraphError(res);
+    return (await res.json()) as GraphDriveItem;
   }
 
   async upload(file: File, folderPath: string, onProgress?: (progress: UploadProgress) => void): Promise<StorageItem> {

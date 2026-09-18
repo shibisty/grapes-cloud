@@ -51,7 +51,36 @@ export const STYLES = `
  * не стоило.
  */
 .gca-tabs { display: flex; align-items: center; gap: 4px; padding: 8px 8px 0; border-bottom: 1px solid var(--gjs-color3, #3c3c3c); flex-wrap: nowrap; }
-.gca-tab { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: none; background: transparent; color: inherit; cursor: pointer; border-radius: 4px 4px 0 0; opacity: .7; }
+/*
+ * height: 28px (а не только padding, как раньше) — баг "высота
+ * вкладок не совпадает с высотой стрелки/плюса": высота у .gca-tab
+ * была чисто content/padding-driven (6px паддинга сверху и снизу +
+ * высота строки текста), а у .gca-tab-icon-btn ("+" и шеврон "ещё
+ * вкладки") высота жёстко зафиксирована в 28px (см. ниже) — из-за
+ * разных шрифтов/масштабов эти два числа на практике не совпадают,
+ * и ряд вкладок визуально "прыгает" по высоте рядом с иконками.
+ * Задаём такую же жёсткую высоту здесь, паддинг оставляем только
+ * горизонтальным. В мобильной адаптации ниже те же 28px → 36px,
+ * как и у .gca-tab-icon-btn.
+ */
+.gca-tab { display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: none; background: transparent; color: inherit; cursor: pointer; border-radius: 4px 4px 0 0; opacity: .7; }
+/*
+ * Баг "текст в кнопке не должен переноситься на вторую строку" (на
+ * мобильном, в ряду вкладок — там теснее всего, а у "My files"/
+ * "Мои файлы" и особенно у более длинных лейблов вроде "Google
+ * Drive" не хватало места). Причина — классика с flex: .gca-tab —
+ * flex-контейнер, а у span'а с текстом (flex-item) браузерный дефолт
+ * min-width: auto — он ОТКАЗЫВАЕТСЯ схлопываться уже своего
+ * содержимого в одну строку, вместо этого текст переносился на
+ * вторую строку внутри, а не обрезался/ужимался вместе с кнопкой.
+ * После того как высота .gca-tab стала жёсткой (28px/36px, см. выше
+ * в этом же файле) перенос на вторую строку стал бы ещё и визуально
+ * обрезаться/наезжать. min-width: 0 разрешает span схлопнуться,
+ * white-space: nowrap запрещает перенос, text-overflow: ellipsis —
+ * аккуратное "…" вместо жёсткого обрыва, если места всё равно не
+ * хватит.
+ */
+.gca-tab__label { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gca-tab:hover { opacity: 1; }
 .gca-tab--active { opacity: 1; background: var(--gjs-color4, rgba(255,255,255,.08)); font-weight: 600; }
 .gca-tab__icon { width: 16px; height: 16px; display: inline-flex; }
@@ -245,7 +274,22 @@ export const STYLES = `
 [dir="rtl"] .gca-insert-error { text-align: right; }
 .gca-insert-error__text { flex: 1; }
 .gca-insert-error__close { width: 22px; height: 22px; font-size: 16px; line-height: 1; flex-shrink: 0; }
-.gca-context-menu { position: fixed; z-index: 10000; min-width: 180px; padding: 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,.2); background: var(--gjs-color2, #333); box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+/*
+ * Явный color здесь (а не color: inherit, как у .gca-tab-add__item/
+ * .gca-tab-overflow__item выше) — баг "контекстное меню не
+ * контрастное": AssetBrowser.openContextMenuAt() специально делает
+ * document.body.appendChild(menu) (см. AssetBrowser.ts), а не кладёт
+ * его внутрь .gca-root, потому что position: fixed с координатами
+ * клика должен позиционироваться относительно viewport'а, а не
+ * какого-нибудь transform'нутого/overflow-обрезающего предка внутри
+ * модалки редактора. Но именно из-за этого color: inherit тянул цвет
+ * текста не из темы GrapesJS (там всё было бы ОК), а из <body>
+ * САЙТА, на котором стоит редактор, — у большинства сайтов это
+ * обычный тёмный/чёрный текст, который на тёмном фоне меню (#333)
+ * становится почти нечитаемым. Задаём цвет прямо здесь, независимо
+ * от document.body хоста.
+ */
+.gca-context-menu { position: fixed; z-index: 10000; min-width: 180px; padding: 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,.2); background: var(--gjs-color2, #333); color: var(--gjs-font-color, #e8e8e8); box-shadow: 0 6px 20px rgba(0,0,0,.4); }
 .gca-context-menu__item { display: block; width: 100%; text-align: left; padding: 8px 10px; border: none; border-radius: 4px; background: none; color: inherit; cursor: pointer; font: inherit; white-space: nowrap; }
 [dir="rtl"] .gca-context-menu__item { text-align: right; }
 .gca-context-menu__item:hover { background: rgba(255,255,255,.1); }
@@ -337,6 +381,18 @@ export const STYLES = `
  * узкого выпадающего списка у правого края.
  */
 @media (max-width: 640px) {
+  /*
+   * .gca-modal-dialog — класс, который canvas/picker.ts добавляет
+   * ТОЛЬКО на диалог нашей собственной модалки (см. комментарий там)
+   * сразу после editor.Modal.open(), поэтому это правило не трогает
+   * остальные модалки GrapesJS (код-редактор, настройки и т.п.).
+   * margin: 0 + width/max-width: 100% растягивают попап край-в-край,
+   * убираем и border-radius (на весь экран скруглённые углы модалки
+   * выглядят странно), .gjs-mdl-header/.gjs-mdl-content — уменьшенный
+   * горизонтальный padding, чтобы не съедать и так небольшую ширину.
+   */
+  .gca-modal-dialog { width: 100%; max-width: 100%; margin: 0; border-radius: 0; }
+  .gca-modal-dialog .gjs-mdl-header, .gca-modal-dialog .gjs-mdl-content { padding-left: 8px; padding-right: 8px; }
   .gca-toolbar__row { justify-content: flex-start; }
   .gca-toolbar__actions { width: 100%; justify-content: flex-end; }
   .gca-search-row { width: 100%; }
@@ -347,6 +403,7 @@ export const STYLES = `
   .gca-upload-btn { width: 100%; justify-content: center; }
   .gca-grid { grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
   .gca-icon-btn, .gca-tab-icon-btn, .gca-view-toggle__btn { width: 36px; height: 36px; }
+  .gca-tab { height: 36px; }
   .gca-icon-btn svg, .gca-tab-icon-btn svg, .gca-view-toggle__btn svg { width: 18px; height: 18px; }
   .gca-settings__menu { left: 0; right: 0; min-width: 0; }
   [dir="rtl"] .gca-settings__menu { left: 0; right: 0; }

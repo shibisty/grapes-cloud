@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'Bu Microsoft hesabının kuruluşunda OneDrive/SharePoint lisansı yok (Microsoft Graph: "Tenant does not have a SPO license"). Kişisel bir Microsoft hesabıyla (outlook.com/hotmail/live) veya kuruluşunda OneDrive for Business etkinleştirilmiş bir iş hesabıyla giriş yapın.',
       noDownloadableContent:
         '"{name}" öğesinin indirilebilir içeriği yok ve eklenemiyor — bu genellikle bir OneNote defteri veya OneDrive tarafından normal bir dosya olarak sunulamayan başka bir öğe türü olduğunda görülür.',
+      downloadUrlUnavailable:
+        '"{name}" için henüz bir indirme bağlantısı yok — bu, dosya yüklendikten kısa süre sonra veya kuruluşunuz bu dosyanın indirilmesini engelliyorsa oluşabilir. Lütfen birazdan yeniden deneyin.',
       uploadFailed: 'OneDrive: yükleme başarısız oldu (durum {status})',
       uploadNetworkError: 'OneDrive: dosya yüklenirken ağ hatası oluştu',
     },

@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'לארגון של חשבון Microsoft זה אין רישיון עבור OneDrive/SharePoint (Microsoft Graph: "Tenant does not have a SPO license"). התחברו עם חשבון Microsoft אישי (outlook.com/hotmail/live) או עם חשבון עבודה שהארגון שלו הפעיל את OneDrive for Business.',
       noDownloadableContent:
         '"{name}" אינו כולל תוכן הניתן להורדה — בדרך כלל זהו מחברת OneNote או סוג פריט אחר שאותו OneDrive אינו יכול לספק כקובץ רגיל.',
+      downloadUrlUnavailable:
+        '"{name}" עדיין אין קישור הורדה — זה יכול לקרות ממש אחרי ההעלאה, או אם הארגון שלך חוסם הורדה של הקובץ הזה. נסה שוב בעוד רגע.',
       uploadFailed: 'OneDrive: ההעלאה נכשלה (סטטוס {status})',
       uploadNetworkError: 'OneDrive: שגיאת רשת בעת העלאת הקובץ',
     },

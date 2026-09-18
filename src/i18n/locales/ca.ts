@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'L’organització d’aquest compte de Microsoft no té llicència per a OneDrive/SharePoint (Microsoft Graph: «Tenant does not have a SPO license»). Inicia sessió amb un compte de Microsoft personal (outlook.com/hotmail/live) o amb un compte de treball l’organització del qual tingui OneDrive for Business activat.',
       noDownloadableContent:
         '«{name}» no té contingut descarregable — normalment això passa amb blocs de notes del OneNote o amb un altre tipus d’element que OneDrive no pot servir com a fitxer normal.',
+      downloadUrlUnavailable:
+        '«{name}» encara no té un enllaç de descàrrega — pot passar just després de pujar el fitxer, o si la teva organització bloqueja la seva descàrrega. Torna-ho a provar d’aquí una estona.',
       uploadFailed: 'OneDrive: la pujada ha fallat (estat {status})',
       uploadNetworkError: 'OneDrive: error de xarxa en pujar el fitxer',
     },

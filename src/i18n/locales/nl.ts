@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'De organisatie van dit Microsoft-account heeft geen licentie voor OneDrive/SharePoint (Microsoft Graph: "Tenant does not have a SPO license"). Log in met een persoonlijk Microsoft-account (outlook.com/hotmail/live) of een werkaccount waarvan de organisatie OneDrive for Business heeft ingeschakeld.',
       noDownloadableContent:
         '"{name}" heeft geen downloadbare inhoud en kan niet worden ingevoegd — dit komt meestal voor bij een OneNote-notitieblok of een ander itemtype dat OneDrive niet als gewoon bestand kan leveren.',
+      downloadUrlUnavailable:
+        '"{name}" heeft nog geen downloadlink — dit kan gebeuren direct na het uploaden, of als je organisatie het downloaden van dit bestand blokkeert. Probeer het straks opnieuw.',
       uploadFailed: 'OneDrive: uploaden is mislukt (status {status})',
       uploadNetworkError: 'OneDrive: netwerkfout tijdens het uploaden van het bestand',
     },

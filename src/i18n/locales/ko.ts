@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         '이 Microsoft 계정의 조직에는 OneDrive/SharePoint 라이선스가 없습니다(Microsoft Graph: "Tenant does not have a SPO license"). 개인 Microsoft 계정(outlook.com/hotmail/live)으로 로그인하거나, OneDrive for Business가 활성화된 조직의 업무용 계정으로 로그인하세요.',
       noDownloadableContent:
         '"{name}" 항목에는 다운로드할 수 있는 콘텐츠가 없어 삽입할 수 없습니다 — 보통 OneNote 노트북이거나, OneDrive가 일반 파일로 제공할 수 없는 다른 유형의 항목인 경우입니다.',
+      downloadUrlUnavailable:
+        '"{name}" 항목에 아직 다운로드 링크가 없습니다 — 파일을 업로드한 직후이거나, 조직에서 이 파일의 다운로드를 차단한 경우 발생할 수 있습니다. 잠시 후 다시 시도해 주세요.',
       uploadFailed: 'OneDrive: 업로드에 실패했습니다(상태 코드 {status})',
       uploadNetworkError: 'OneDrive: 파일 업로드 중 네트워크 오류가 발생했습니다',
     },

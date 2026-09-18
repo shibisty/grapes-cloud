@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'Ο οργανισμός αυτού του λογαριασμού Microsoft δεν διαθέτει άδεια χρήσης για το OneDrive/SharePoint (Microsoft Graph: «Tenant does not have a SPO license»). Συνδεθείτε με προσωπικό λογαριασμό Microsoft (outlook.com/hotmail/live) ή με λογαριασμό εργασίας του οποίου ο οργανισμός έχει ενεργοποιημένο το OneDrive for Business.',
       noDownloadableContent:
         'Το «{name}» δεν διαθέτει περιεχόμενο για λήψη — συνήθως πρόκειται για σημειωματάριο OneNote ή άλλον τύπο στοιχείου που το OneDrive δεν μπορεί να παραδώσει ως απλό αρχείο.',
+      downloadUrlUnavailable:
+        'Το «{name}» δεν έχει ακόμη σύνδεσμο λήψης — αυτό μπορεί να συμβεί αμέσως μετά τη μεταφόρτωση, ή αν ο οργανισμός σας αποκλείει τη λήψη αυτού του αρχείου. Δοκιμάστε ξανά σε λίγο.',
       uploadFailed: 'OneDrive: η μεταφόρτωση απέτυχε (κατάσταση {status})',
       uploadNetworkError: 'OneDrive: σφάλμα δικτύου κατά τη μεταφόρτωση του αρχείου',
     },

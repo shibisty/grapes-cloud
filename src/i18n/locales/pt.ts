@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'A organização desta conta Microsoft não tem o OneDrive/SharePoint licenciado (Microsoft Graph: «Tenant does not have a SPO license»). Inicie sessão com uma conta Microsoft pessoal (outlook.com/hotmail/live) ou uma conta de trabalho cuja organização tenha o OneDrive for Business ativado.',
       noDownloadableContent:
         '«{name}» não tem conteúdo transferível e não pode ser inserido — isto acontece normalmente com blocos de notas do OneNote ou com outros tipos de item que o OneDrive não consegue disponibilizar como um ficheiro normal.',
+      downloadUrlUnavailable:
+        '«{name}» ainda não tem uma hiperligação de transferência — isto pode acontecer logo após o carregamento, ou se a sua organização bloquear a transferência deste ficheiro. Tente novamente dentro de momentos.',
       uploadFailed: 'OneDrive: o carregamento falhou (estado {status})',
       uploadNetworkError: 'OneDrive: erro de rede ao carregar o ficheiro',
     },

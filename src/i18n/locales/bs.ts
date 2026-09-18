@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'Organizacija ovog Microsoft naloga nema licenciran OneDrive/SharePoint (Microsoft Graph: „Tenant does not have a SPO license”). Prijavite se ličnim Microsoft nalogom (outlook.com/hotmail/live) ili poslovnim nalogom čija organizacija ima omogućen OneDrive for Business.',
       noDownloadableContent:
         '„{name}” nema sadržaj koji se može preuzeti — obično se to dešava kod OneNote bilježnica ili drugih vrsta stavki koje OneDrive ne može poslužiti kao obična datoteka.',
+      downloadUrlUnavailable:
+        '„{name}” još nema poveznicu za preuzimanje — to se može desiti odmah nakon otpremanja, ili ako vaša organizacija blokira preuzimanje ove datoteke. Pokušajte ponovo za trenutak.',
       uploadFailed: 'OneDrive: otpremanje nije uspjelo (status {status})',
       uploadNetworkError: 'OneDrive: mrežna greška prilikom otpremanja datoteke',
     },

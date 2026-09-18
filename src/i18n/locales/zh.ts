@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         '此 Microsoft 账号所属组织未获得 OneDrive/SharePoint 许可（Microsoft Graph："Tenant does not have a SPO license"）。请使用个人 Microsoft 账号（outlook.com/hotmail/live）登录，或使用组织已启用 OneDrive for Business 的工作账号登录。',
       noDownloadableContent:
         '"{name}" 没有可下载的内容，无法插入 —— 这通常是因为它是 OneNote 笔记本，或是 OneDrive 无法作为普通文件提供的其他类型的项目。',
+      downloadUrlUnavailable:
+        '"{name}" 目前还没有下载链接 —— 这可能是刚上传完文件，也可能是所在组织禁止下载该文件。请稍后重试。',
       uploadFailed: 'OneDrive：上传失败（状态码 {status}）',
       uploadNetworkError: 'OneDrive：上传文件时发生网络错误',
     },

@@ -170,6 +170,8 @@ const messages: CloudAssetsMessages = {
         'Organizacja tego konta Microsoft nie ma wykupionej licencji na OneDrive/SharePoint (Microsoft Graph: „Tenant does not have a SPO license”). Zaloguj się na osobiste konto Microsoft (outlook.com/hotmail/live) lub na konto służbowe, którego organizacja ma włączone OneDrive for Business.',
       noDownloadableContent:
         '„{name}” nie ma zawartości do pobrania i nie można go wstawić — zwykle dotyczy to notatników OneNote lub innych typów elementów, których OneDrive nie może udostępnić jako zwykłego pliku.',
+      downloadUrlUnavailable:
+        '„{name}” nie ma jeszcze linku do pobrania — może się to zdarzyć zaraz po przesłaniu pliku lub jeśli organizacja blokuje jego pobieranie. Spróbuj ponownie za chwilę.',
       uploadFailed: 'OneDrive: przesyłanie nie powiodło się (status {status})',
       uploadNetworkError: 'OneDrive: błąd sieci podczas przesyłania pliku',
     },
