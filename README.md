@@ -1,5 +1,7 @@
 # grapesjs-cloud-assets
 
+[![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/cw/shibisty)
+
 A GrapesJS plugin: insert images, video, audio and documents from
 cloud storage through a single shared UI with tabs. The first tab is
 **"My files"** (the local source: assets already added to the
@@ -441,3 +443,7 @@ npm install
 npm run typecheck
 npm run build   # dist/grapesjs-cloud-assets.js (ESM) + .umd.cjs
 ```
+
+[![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/cw/shibisty)
+
+If this project helps you, consider supporting its development on Patreon ❤️
