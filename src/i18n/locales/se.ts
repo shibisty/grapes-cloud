@@ -45,6 +45,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Det gick inte att läsa in fillistan',
+      insertFailed: 'Det gick inte att infoga den här filen',
     },
     dropzone: {
       active: 'Släpp för att ladda upp',

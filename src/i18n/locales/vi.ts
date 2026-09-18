@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Không thể tải danh sách tệp',
+      insertFailed: 'Không thể chèn tệp này',
     },
     dropzone: {
       active: 'Thả để tải lên',

@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'טעינת רשימת הקבצים נכשלה',
+      insertFailed: 'לא ניתן היה להוסיף קובץ זה',
     },
     dropzone: {
       active: 'שחררו להעלאה',

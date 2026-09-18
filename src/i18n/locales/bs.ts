@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Nije uspjelo učitavanje liste datoteka',
+      insertFailed: 'Nije moguće umetnuti ovu datoteku',
     },
     dropzone: {
       active: 'Ispustite za otpremanje',

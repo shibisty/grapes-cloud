@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Bestandslijst kon niet worden geladen',
+      insertFailed: 'Dit bestand kon niet worden ingevoegd',
     },
     dropzone: {
       active: 'Zet hier neer om te uploaden',

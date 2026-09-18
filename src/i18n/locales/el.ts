@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Αποτυχία φόρτωσης της λίστας αρχείων',
+      insertFailed: 'Δεν ήταν δυνατή η εισαγωγή αυτού του αρχείου',
     },
     dropzone: {
       active: 'Αφήστε για μεταφόρτωση',

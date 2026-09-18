@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Não foi possível carregar a lista de ficheiros',
+      insertFailed: 'Não foi possível inserir este ficheiro',
     },
     dropzone: {
       active: 'Largue aqui para carregar',

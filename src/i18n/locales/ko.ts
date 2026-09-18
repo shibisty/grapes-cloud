@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: '파일 목록을 불러오지 못했습니다',
+      insertFailed: '이 파일을 삽입하지 못했습니다',
     },
     dropzone: {
       active: '놓아서 업로드',

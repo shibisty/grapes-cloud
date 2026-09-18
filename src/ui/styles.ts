@@ -216,6 +216,35 @@ export const STYLES = `
 .gca-selection-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; margin-bottom: 10px; border-radius: 6px; background: rgba(47,111,237,.14); border: 1px solid rgba(47,111,237,.35); flex-wrap: wrap; }
 .gca-selection-bar__label { font-weight: 600; }
 .gca-selection-bar__actions { display: flex; align-items: center; gap: 6px; }
+/*
+ * Пока ничего не выбрано, кнопки Cancel/Insert прячутся через
+ * visibility (НЕ display/[hidden]) — они по-прежнему занимают место в
+ * строке, поэтому высота .gca-selection-bar не меняется между "0
+ * выбрано" и "N выбрано" и остальной контент body не прыгает при
+ * первом клике по файлу. См. renderSelectionBar() в AssetBrowser.ts.
+ */
+.gca-selection-bar__actions--empty { visibility: hidden; }
+/*
+ * Раньше ошибка вставки конкретного файла (например, у OneDrive —
+ * item без @microsoft.graph.downloadUrl) уходила только в
+ * onError/console (см. AssetBrowser.quickInsert/insertSelection) —
+ * человек без открытых DevTools видел только, что клик "ничего не
+ * сделал". Плавающий баннер ВНИЗУ .gca-root, над последним элементом
+ * списка — сиблинг .gca-body (как .gca-drop-overlay/.gca-upload-queue
+ * выше, см. insertErrorEl в AssetBrowser.ts), а не его часть, и
+ * специально через position: absolute (а не в обычном потоке, как
+ * .gca-selection-bar) — ни появление, ни закрытие баннера не должны
+ * сдвигать тулбар/список. Из-за абсолютного позиционирования и
+ * наложения поверх списка фон делаем непрозрачным (как у
+ * .gca-context-menu/.gca-upload-queue), иначе контент списка
+ * просвечивал бы сквозь текст ошибки. Совмещается с классом .gca-error
+ * (даёт красный цвет текста) — но переопределяет его padding/text-align
+ * тем же способом, что и .gca-auth-gate__error ниже.
+ */
+.gca-insert-error { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 12; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border-radius: 6px; background: var(--gjs-color2, #333); border: 1px solid rgba(255,107,107,.5); box-shadow: 0 4px 14px rgba(0,0,0,.35); text-align: left; }
+[dir="rtl"] .gca-insert-error { text-align: right; }
+.gca-insert-error__text { flex: 1; }
+.gca-insert-error__close { width: 22px; height: 22px; font-size: 16px; line-height: 1; flex-shrink: 0; }
 .gca-context-menu { position: fixed; z-index: 10000; min-width: 180px; padding: 4px; border-radius: 6px; border: 1px solid rgba(255,255,255,.2); background: var(--gjs-color2, #333); box-shadow: 0 6px 20px rgba(0,0,0,.4); }
 .gca-context-menu__item { display: block; width: 100%; text-align: left; padding: 8px 10px; border: none; border-radius: 4px; background: none; color: inherit; cursor: pointer; font: inherit; white-space: nowrap; }
 [dir="rtl"] .gca-context-menu__item { text-align: right; }

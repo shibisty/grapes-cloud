@@ -45,6 +45,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Failed to load the file list',
+      insertFailed: 'Couldn\'t insert this file',
     },
     dropzone: {
       active: 'Drop to upload',

@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: '文件列表加载失败',
+      insertFailed: '无法插入此文件',
     },
     dropzone: {
       active: '拖放以上传',

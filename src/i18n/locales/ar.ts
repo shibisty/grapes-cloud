@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'تعذّر تحميل قائمة الملفات',
+      insertFailed: 'تعذّر إدراج هذا الملف',
     },
     dropzone: {
       active: 'أفلت هنا للرفع',

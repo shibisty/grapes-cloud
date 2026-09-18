@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'No s’ha pogut carregar la llista de fitxers',
+      insertFailed: 'No s’ha pogut inserir aquest fitxer',
     },
     dropzone: {
       active: 'Deixa anar per pujar',

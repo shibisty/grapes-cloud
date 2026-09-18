@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Impossibile caricare l’elenco dei file',
+      insertFailed: 'Impossibile inserire questo file',
     },
     dropzone: {
       active: 'Rilascia per caricare',

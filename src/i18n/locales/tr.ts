@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Dosya listesi yüklenemedi',
+      insertFailed: 'Bu dosya eklenemedi',
     },
     dropzone: {
       active: 'Yüklemek için bırakın',

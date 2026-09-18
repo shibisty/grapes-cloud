@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Nie udało się wczytać listy plików',
+      insertFailed: 'Nie udało się wstawić tego pliku',
     },
     dropzone: {
       active: 'Upuść, aby przesłać',

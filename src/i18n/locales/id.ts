@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Gagal memuat daftar file',
+      insertFailed: 'Gagal menyisipkan file ini',
     },
     dropzone: {
       active: 'Lepaskan untuk mengunggah',

@@ -136,7 +136,7 @@ describe('AssetBrowser — selection & explicit insert', () => {
     cellByName(container, 'Folder').click(); // navigate into the folder
     await flush();
 
-    expect(container.querySelector('.gca-selection-bar')).toBeNull();
+    expect(container.querySelector('.gca-selection-bar__label')?.textContent).toBe('0 selected');
     expect(provider.list).toHaveBeenLastCalledWith('/folder', { cursor: undefined, signal: expect.anything() });
   });
 
@@ -152,6 +152,36 @@ describe('AssetBrowser — selection & explicit insert', () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect.mock.calls[0][0].name).toBe('a.jpg');
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('double-click on a file whose resolve() fails shows a visible in-picker banner, not just onError/console (regression: OneDrive "no downloadable content" silently did nothing)', async () => {
+    const provider = createFakeProvider({ items: [makeFile({ id: 'f1', name: 'weird.jpg', path: '/weird.jpg' })] });
+    provider.resolve.mockRejectedValue(new Error('Microsoft Graph: item "weird.jpg" has no downloadable content'));
+
+    const { container, onSelect, onDone, onError } = mountAssetBrowser([provider]);
+    await flush();
+
+    cellByName(container, 'weird.jpg').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await flush();
+
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onDone).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledTimes(1); // still reported upstream too
+
+    // The banner element is a permanent sibling of the list (like the drop
+    // overlay/upload queue panel) so it can float via position: absolute
+    // without shifting the list — presence in the DOM alone doesn't mean
+    // it's showing, so assert on `.hidden` (backed by the `[hidden] {
+    // display: none !important }` rule), not on querySelector returning null.
+    const banner = container.querySelector<HTMLElement>('.gca-insert-error');
+    expect(banner, 'insert error banner element should exist').toBeTruthy();
+    expect(banner!.hidden, 'insert error should render as a visible banner, not only go to onError/console').toBe(false);
+    expect(banner!.textContent).toContain('no downloadable content');
+
+    // Dismissible without reloading the folder or losing the rest of the list.
+    container.querySelector<HTMLButtonElement>('.gca-insert-error__close')!.click();
+    expect(container.querySelector<HTMLElement>('.gca-insert-error')!.hidden).toBe(true);
+    expect(cellByName(container, 'weird.jpg')).toBeTruthy(); // list itself untouched
   });
 
   it('double-clicking a folder does nothing (folders only navigate on plain click)', async () => {
@@ -196,7 +226,9 @@ describe('AssetBrowser — selection & explicit insert', () => {
     expect(onSelect.mock.calls[0][0].name).toBe('a.jpg');
     expect(onError).toHaveBeenCalledTimes(1); // "b" failed, reported, not thrown
     expect(onDone).toHaveBeenCalledTimes(1); // still closes: at least one insert succeeded
-    expect(container.querySelector('.gca-selection-bar')).toBeNull(); // selection cleared after insert
+    // selection cleared after insert — bar itself stays in the layout (reserved space), just back to "0 selected"
+    expect(container.querySelector('.gca-selection-bar__label')?.textContent).toBe('0 selected');
+    expect(container.querySelector('.gca-selection-bar__actions')?.classList.contains('gca-selection-bar__actions--empty')).toBe(true);
   });
 
   it('does NOT call onDone when every selected insert fails', async () => {
@@ -213,6 +245,9 @@ describe('AssetBrowser — selection & explicit insert', () => {
 
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onDone).not.toHaveBeenCalled();
+    // Modal stays open (nothing succeeded) — the banner is how the person finds out why.
+    // The banner element always exists (permanent sibling of the list, see above) — `.hidden` is what tracks visibility.
+    expect(container.querySelector<HTMLElement>('.gca-insert-error')!.hidden).toBe(false);
   });
 
   it('"Cancel" in the selection bar clears the selection without inserting anything', async () => {
@@ -225,7 +260,47 @@ describe('AssetBrowser — selection & explicit insert', () => {
     container.querySelector<HTMLButtonElement>('.gca-selection-bar__actions .gca-btn:not(.gca-btn--primary)')!.click();
     await flush();
 
-    expect(container.querySelector('.gca-selection-bar')).toBeNull();
+    expect(container.querySelector('.gca-selection-bar__label')?.textContent).toBe('0 selected');
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('the selection bar is always in the layout — "0 selected" with inert (but space-reserving) buttons before anything is selected, so the rest of the body does not jump on the first click', async () => {
+    const provider = createFakeProvider({ items: [makeFile({ id: 'a', name: 'a.jpg' })] });
+    const { container } = mountAssetBrowser([provider]);
+    await flush();
+
+    const label = container.querySelector('.gca-selection-bar__label');
+    const actions = container.querySelector('.gca-selection-bar__actions');
+    expect(label?.textContent).toBe('0 selected');
+    expect(actions?.classList.contains('gca-selection-bar__actions--empty')).toBe(true);
+    // Buttons are still rendered (reserve the row's height) — just not interactive.
+    expect(actions?.querySelectorAll('button').length).toBe(2);
+
+    cellByName(container, 'a.jpg').click();
+    await flush();
+
+    expect(container.querySelector('.gca-selection-bar__label')?.textContent).toBe('1 selected');
+    expect(container.querySelector('.gca-selection-bar__actions')?.classList.contains('gca-selection-bar__actions--empty')).toBe(false);
+  });
+
+  it('the insert-error banner is a sibling of the list, not inside it — it floats via CSS instead of pushing the list down', async () => {
+    const provider = createFakeProvider({ items: [makeFile({ id: 'f1', name: 'a.jpg' })] });
+    provider.resolve.mockRejectedValue(new Error('boom'));
+    const { container } = mountAssetBrowser([provider]);
+    await flush();
+
+    cellByName(container, 'a.jpg').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await flush();
+
+    const banner = container.querySelector('.gca-insert-error');
+    const body = container.querySelector('.gca-body');
+    expect(banner).toBeTruthy();
+    expect(body).toBeTruthy();
+    // Would be `true` if the banner were still appended inside fillBody()'s
+    // .gca-body, which is exactly the regression this guards against — the
+    // banner must sit outside body (a root-level sibling, like the drop
+    // overlay/upload queue panel) so it can float via position: absolute
+    // instead of pushing list content down when it appears.
+    expect(body!.contains(banner)).toBe(false);
   });
 });

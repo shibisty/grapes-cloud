@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Не удалось загрузить список файлов',
+      insertFailed: 'Не удалось вставить этот файл',
     },
     dropzone: {
       active: 'Отпустите, чтобы загрузить',

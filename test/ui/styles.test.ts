@@ -35,4 +35,15 @@ describe('STYLES — регрессия на два конкретных баг�
     expect(match, '.gca-tabs rule not found in STYLES').toBeTruthy();
     expect(match![1]).not.toMatch(/overflow\s*:\s*hidden/);
   });
+
+  // Баннер ошибки вставки (.gca-insert-error) специально плавающий, а не
+  // в обычном flex-потоке .gca-root, как .gca-selection-bar — появление/
+  // закрытие не должно сдвигать тулбар/список (см. insertErrorEl в
+  // AssetBrowser.ts). Регрессия на случай, если кто-то вернёт его в
+  // обычный поток "для простоты".
+  it('.gca-insert-error позиционируется через position: absolute — иначе появление/закрытие баннера снова будет двигать список', () => {
+    const match = STYLES.match(/\.gca-insert-error\s*\{([^}]*)\}/);
+    expect(match, '.gca-insert-error rule not found in STYLES').toBeTruthy();
+    expect(match![1]).toMatch(/position\s*:\s*absolute/);
+  });
 });

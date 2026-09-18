@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'بارگذاری فهرست فایل‌ها ناموفق بود',
+      insertFailed: 'این فایل درج نشد',
     },
     dropzone: {
       active: 'برای بارگذاری رها کنید',

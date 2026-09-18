@@ -38,6 +38,7 @@ const messages: CloudAssetsMessages = {
     },
     error: {
       generic: 'Kunne ikke laste filisten',
+      insertFailed: 'Kunne ikke sette inn denne filen',
     },
     dropzone: {
       active: 'Slipp for å laste opp',

@@ -74,6 +74,8 @@ export interface CloudAssetsMessages {
     error: {
       /** Общая ошибка загрузки списка файлов (когда у исключения нет собственного ключа). */
       generic: string;
+      /** Запасной текст баннера "не удалось вставить файл" (см. AssetBrowser.renderInsertErrorBanner) — когда у исключения нет собственного i18n-ключа/сообщения. */
+      insertFailed: string;
     };
     /** Текст в оверлее зоны перетаскивания файлов/папок — см. AssetBrowser.renderDropOverlay. */
     dropzone: {

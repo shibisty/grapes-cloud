@@ -95,6 +95,16 @@ interface ProviderState {
   hasMore: boolean;
   loading: boolean;
   error: string | null;
+  /**
+   * Ошибка вставки ПОСЛЕДНЕГО файла (quickInsert/insertSelection) —
+   * отдельно от `error` выше, который про ошибку загрузки ВСЕГО
+   * списка (и прячет сам список при рендере). Показывается плавающим
+   * баннером (position: absolute, НЕ часть обычного flex-потока — не
+   * сдвигает тулбар/список ни появляясь, ни исчезая), не мешая
+   * продолжить работу с остальными файлами; см. insertErrorEl/
+   * renderInsertErrorBanner().
+   */
+  insertError: string | null;
   /** Текущий поисковый запрос ("" — обычный просмотр папки, не поиск). */
   searchQuery: string;
   typeFilter: TypeFilter;
@@ -177,6 +187,8 @@ export class AssetBrowser {
   private dragDepth = 0;
   private dropOverlayEl: HTMLElement | null = null;
   private uploadQueueEl: HTMLElement | null = null;
+  /** Баннер "не удалось вставить файл" — сиблинг body, см. renderShell()/renderInsertErrorBanner(). */
+  private insertErrorEl: HTMLElement | null = null;
   private uploadQueueItems: UploadQueueItem[] = [];
   private connectModalEl: HTMLElement | null = null;
   private readonly onLocaleChange = () => this.renderShell();
@@ -478,6 +490,7 @@ export class AssetBrowser {
       hasMore: false,
       loading: false,
       error: null,
+      insertError: null,
       searchQuery: '',
       typeFilter: 'all',
       sort: null,
@@ -714,6 +727,26 @@ export class AssetBrowser {
     this.root.appendChild(this.uploadQueueEl);
     this.renderUploadQueue();
 
+    // Тоже сиблинг body (см. комментарий у dropOverlayEl выше), но, в
+    // отличие от dropOverlayEl/uploadQueueEl, позиционируется НЕ в
+    // обычном flex-потоке .gca-root, а через position: absolute (см.
+    // .gca-insert-error в styles.ts) — по просьбе пользователя баннер
+    // об ошибке вставки не должен сдвигать тулбар/список ни при
+    // появлении, ни при исчезновении, в отличие от панели загрузки
+    // выше (та специально занимает место — прогресс есть на что
+    // посмотреть). Наполняется/прячется точечно через
+    // renderInsertErrorBanner(), которая читает состояние АКТИВНОГО
+    // на данный момент провайдера — вызывается отсюда же (после
+    // переключения вкладки — вдруг у новой активной вкладки уже есть
+    // свой insertError) и из quickInsert()/insertSelection()/крестика
+    // закрытия, а не из renderBody() (тот всё равно не тронул бы этот
+    // элемент — он вне body).
+    this.insertErrorEl = document.createElement('div');
+    this.insertErrorEl.className = 'gca-error gca-insert-error';
+    this.insertErrorEl.hidden = true;
+    this.root.appendChild(this.insertErrorEl);
+    this.renderInsertErrorBanner();
+
     // Строится ПОСЛЕ того, как все вкладки/кнопки реально в DOM — расчёт
     // ниже читает их реальную ширину (offsetWidth), см. updateTabsOverflow().
     this.updateTabsOverflow();
@@ -945,9 +978,17 @@ export class AssetBrowser {
 
     body.appendChild(this.renderToolbar(provider, state));
 
-    if (state.selectedIds.size > 0) {
-      body.appendChild(this.renderSelectionBar(provider, state));
-    }
+    // Раньше рендерилась только при selectedIds.size > 0 — из-за этого
+    // при выборе первого файла весь контент под тулбаром прыгал вниз
+    // (полоса "N выбрано" внезапно занимала место), а при отмене выбора
+    // прыгал обратно. Теперь полоса всегда в разметке (просто "0
+    // выбрано" и невидимые, но занимающие место кнопки, пока выбора
+    // нет — см. renderSelectionBar()), высота body стабильна.
+    body.appendChild(this.renderSelectionBar(provider, state));
+
+    // Баннер ошибки вставки (.gca-insert-error) СЮДА не добавляется —
+    // он сиблинг body, позиционируется через position: absolute и
+    // обновляется отдельно, см. renderInsertErrorBanner()/insertErrorEl.
 
     // Древовидный вид не связан с `state.items`/`state.path` обычного
     // просмотра (у него своя лениво подгружаемая иерархия начиная с
@@ -1538,23 +1579,34 @@ export class AssetBrowser {
     return form;
   }
 
-  /** Панель "Выбрано N" — появляется, только когда есть множественный выбор (shift/ctrl+клик). */
+  /**
+   * Панель "Выбрано N" — теперь рендерится ВСЕГДА (см. fillBody()), а не
+   * только при множественном выборе, чтобы место под неё было
+   * зарезервировано с самого начала и остальной контент не прыгал при
+   * первом/последнем клике. Пока выбора нет — просто "0 выбрано" и
+   * кнопки Cancel/Insert невидимые (`visibility: hidden` через
+   * `.gca-selection-bar__actions--empty`, НЕ `display: none`/`hidden` —
+   * тогда они по-прежнему занимают место в разметке, но некликабельны).
+   */
   private renderSelectionBar(provider: StorageProvider, state: ProviderState): HTMLElement {
     const bar = document.createElement('div');
     bar.className = 'gca-selection-bar';
 
+    const count = state.selectedIds.size;
+
     const label = document.createElement('span');
     label.className = 'gca-selection-bar__label';
-    label.textContent = t(this.editor, 'common.selectedCount', { count: state.selectedIds.size });
+    label.textContent = t(this.editor, 'common.selectedCount', { count });
     bar.appendChild(label);
 
     const actions = document.createElement('div');
-    actions.className = 'gca-selection-bar__actions';
+    actions.className = count > 0 ? 'gca-selection-bar__actions' : 'gca-selection-bar__actions gca-selection-bar__actions--empty';
 
     const cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
     cancelBtn.className = 'gca-btn';
     cancelBtn.textContent = t(this.editor, 'common.cancelSelection');
+    cancelBtn.tabIndex = count > 0 ? 0 : -1;
     cancelBtn.addEventListener('click', () => {
       state.selectedIds.clear();
       state.lastClickedId = null;
@@ -1565,7 +1617,8 @@ export class AssetBrowser {
     const insertBtn = document.createElement('button');
     insertBtn.type = 'button';
     insertBtn.className = 'gca-btn gca-btn--primary';
-    insertBtn.textContent = t(this.editor, 'common.insertSelected', { count: state.selectedIds.size });
+    insertBtn.textContent = t(this.editor, 'common.insertSelected', { count });
+    insertBtn.tabIndex = count > 0 ? 0 : -1;
     insertBtn.addEventListener('click', () => void this.insertSelection(provider, state));
     actions.appendChild(insertBtn);
 
@@ -1833,12 +1886,32 @@ export class AssetBrowser {
 
   private async quickInsert(provider: StorageProvider, item: StorageItem, busyEl: HTMLElement): Promise<void> {
     busyEl.classList.add('gca-cell--busy');
+    // Провайдер, к которому реально относится этот клик — не обязательно
+    // this.activeProvider к МОМЕНТУ catch (пользователь мог успеть
+    // переключить вкладку, пока resolve() ещё в полёте).
+    const state = this.state.get(provider.id);
+    if (state) {
+      state.insertError = null;
+      if (this.activeProviderId === provider.id) this.renderInsertErrorBanner();
+    }
     try {
       const asset = await provider.resolve(item);
       this.props.onSelect(asset);
       this.props.onDone?.();
     } catch (error) {
       this.props.onError?.(error, provider.id);
+      // Раньше ошибка (например, OneDrive-item без
+      // @microsoft.graph.downloadUrl — см. GcaError в
+      // OneDriveProvider.resolve()) уходила только в onError/console —
+      // человек без открытых DevTools видел лишь, что двойной клик
+      // "ничего не сделал". Показываем баннер (не прячем сам список,
+      // как это делает state.error) — только если провайдер всё ещё
+      // активен, иначе показывать банер сейчас некуда (он один на
+      // пикер, см. insertErrorEl).
+      if (state) {
+        state.insertError = this.describeError(error, 'common.error.insertFailed');
+        if (this.activeProviderId === provider.id) this.renderInsertErrorBanner();
+      }
     } finally {
       busyEl.classList.remove('gca-cell--busy');
     }
@@ -1849,6 +1922,7 @@ export class AssetBrowser {
     const ids = [...state.selectedIds];
     if (!ids.length) return;
 
+    state.insertError = null;
     let insertedAny = false;
     for (const id of ids) {
       const item = state.items.find((i) => i.id === id);
@@ -1859,13 +1933,59 @@ export class AssetBrowser {
         insertedAny = true;
       } catch (error) {
         this.props.onError?.(error, provider.id);
+        // Как и в quickInsert() выше — раньше это уходило только в
+        // onError/console. При нескольких ошибках в одной вставке
+        // показываем баннером последнюю (если и вся вставка провалилась
+        // целиком, модалка не закроется — пользователь увидит баннер и
+        // сможет разобраться, что именно не вставилось).
+        state.insertError = this.describeError(error, 'common.error.insertFailed');
       }
     }
 
     state.selectedIds.clear();
     state.lastClickedId = null;
     this.renderBody();
+    this.renderInsertErrorBanner(); // сиблинг body — renderBody() выше его не трогает, обновляем отдельно
     if (insertedAny) this.props.onDone?.();
+  }
+
+  /**
+   * Наполняет/прячет insertErrorEl (см. поле выше и комментарий в
+   * renderShell()) текстом ошибки АКТИВНОГО провайдера — сам баннер не
+   * принимает состояние параметром, а всегда читает `this.activeState`,
+   * потому что элемент один на весь пикер (как и uploadQueueEl) и
+   * показывается только для той вкладки, что сейчас открыта.
+   */
+  private renderInsertErrorBanner(): void {
+    const el = this.insertErrorEl;
+    if (!el) return;
+
+    const message = this.activeState.insertError;
+    if (!message) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    el.hidden = false;
+    el.innerHTML = '';
+
+    const text = document.createElement('span');
+    text.className = 'gca-insert-error__text';
+    text.textContent = message;
+    el.appendChild(text);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'gca-icon-btn gca-insert-error__close';
+    const label = t(this.editor, 'common.upload.close');
+    closeBtn.title = label;
+    closeBtn.setAttribute('aria-label', label);
+    closeBtn.textContent = '×';
+    closeBtn.addEventListener('click', () => {
+      this.activeState.insertError = null;
+      this.renderInsertErrorBanner();
+    });
+    el.appendChild(closeBtn);
   }
 
   // ------------------------------------------------------------------
