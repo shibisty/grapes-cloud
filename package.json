@@ -1,0 +1,49 @@
+{
+  "name": "grapesjs-cloud-assets",
+  "version": "0.1.0",
+  "description": "GrapesJS Asset Manager plugin: browse and insert media from Dropbox, Google Drive, OneDrive and S3-compatible storage through one unified UI.",
+  "type": "module",
+  "main": "./dist/grapesjs-cloud-assets.umd.cjs",
+  "module": "./dist/grapesjs-cloud-assets.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/grapesjs-cloud-assets.js",
+      "require": "./dist/grapesjs-cloud-assets.umd.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "public/dropbox-callback.html",
+    "public/microsoft-callback.html",
+    "README.md"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc -p tsconfig.json --emitDeclarationOnly",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "peerDependencies": {
+    "grapesjs": ">=0.19.0 <1.0.0"
+  },
+  "devDependencies": {
+    "grapesjs": "0.21.13",
+    "jsdom": "^25.0.1",
+    "typescript": "5.6.3",
+    "vite": "5.4.11",
+    "vitest": "^2.1.9"
+  },
+  "keywords": [
+    "grapesjs",
+    "grapesjs-plugin",
+    "asset-manager",
+    "dropbox",
+    "google-drive",
+    "onedrive",
+    "s3"
+  ],
+  "license": "MIT"
+}
