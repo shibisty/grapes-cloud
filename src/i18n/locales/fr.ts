@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Impossible de lire le fichier',
     },
   },
+  settings: {
+    tabButton: 'Comptes connectés',
+    title: 'Comptes connectés',
+    empty: 'Aucun fournisseur ici ne prend encore en charge la connexion par App Key/Client ID.',
+    authenticatedAt: 'Autorisé le {date}',
+    authenticatedAtUnknown: 'Date d’autorisation inconnue',
+    notConnected: 'Non connecté',
+    tokenExpiresIn: 'Le jeton expire dans {time}',
+    tokenExpired: 'Le jeton a expiré — il sera renouvelé automatiquement à la prochaine action',
+    close: 'Fermer',
+  },
   dropbox: {
     setup: {
       step1: 'Ouvrez la Dropbox App Console et cliquez sur « Create app ».',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox : échec de l’envoi (statut {status})',
       uploadNetworkError: 'Dropbox : erreur réseau lors de l’envoi du fichier',
     },
+    sessionNote: 'La session Dropbox n’a pas de limite de durée : elle reste valide jusqu’à ce que vous vous déconnectiez ou révoquiez l’accès dans les paramètres de Dropbox lui-même.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive : échec de l’envoi (statut {status})',
       uploadNetworkError: 'Google Drive : erreur réseau lors de l’envoi du fichier',
     },
+    sessionNote: 'La session Google Drive se renouvelle automatiquement (environ toutes les heures) tant que vous restez connecté à votre compte Google dans ce navigateur.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive : échec de l’envoi (statut {status})',
       uploadNetworkError: 'OneDrive : erreur réseau lors de l’envoi du fichier',
     },
+    sessionNote: 'Microsoft limite à 24 heures la session des applications s’exécutant dans le navigateur (SPA) — passé ce délai, une nouvelle connexion est nécessaire. C’est une limite propre à la plateforme Microsoft, pas au plugin.',
+  },
+  box: {
+    setup: {
+      step1: 'Ouvrez la Box Developer Console et créez une nouvelle app avec l’authentification OAuth 2.0 (User) — pas Server Authentication (JWT/CCG), qui ne peut plus être changée ensuite.',
+      step2Server: 'Contrairement à Dropbox, Google Drive et OneDrive, Box exige un Client Secret pour se connecter, et Box lui-même avertit que ce secret ne doit jamais se trouver dans du code exécuté dans le navigateur — ce fournisseur a donc besoin d’un petit serveur à vous pour le conserver (option tokenEndpoint ci-dessous ; un exemple prêt à l’emploi figure dans le README, section « Box »).',
+      step3: 'Sur la page Configuration de l’app, copiez le Client ID et le Client Secret. Collez le Client ID ci-dessous — gardez le Client Secret uniquement dans les variables d’environnement de votre serveur, jamais ici.',
+      step4WithRedirect: 'Sur la même page Configuration, sous Redirect URIs, collez ceci et cliquez sur Save :',
+      step4NoRedirect: 'Sur la même page Configuration, sous Redirect URIs, ajoutez l’URL complète de la page public/box-callback.html sur votre domaine — elle n’a pas pu être détectée automatiquement (voir redirectUri dans les options du fournisseur).',
+      step5WithOrigin: 'Toujours sur la page Configuration, faites défiler jusqu’à CORS Domains et ajoutez cet origin (nécessaire pour que le navigateur appelle directement l’API Box) :',
+      step5NoOrigin: 'Toujours sur la page Configuration, faites défiler jusqu’à CORS Domains et ajoutez l’origin exact (protocole + domaine + port) depuis lequel ce site est servi — il n’a pas pu être détecté automatiquement.',
+      step6: 'Sous Application Scopes, activez « Read and write all files and folders stored in Box » (ou Read-only si vous n’avez pas besoin de l’envoi/suppression de fichiers).',
+      step7: 'Collez le Client ID dans le champ ci-dessous.',
+    },
+    error: {
+      exchangeCode: 'Box : échec de l’échange du code contre un jeton (statut {status})',
+      requireClientId: 'Enregistrez d’abord un Client ID (voir l’assistant de configuration).',
+      requireRedirectUri:
+        'Impossible de déterminer automatiquement redirectUri. Indiquez-le explicitement dans les options de BoxProvider (nécessaire si le plugin est chargé via <script type="module"> ou un bundler).',
+      requireTokenEndpoint: 'BoxProvider nécessite l’option tokenEndpoint (un petit serveur à vous qui conserve le Client Secret de Box) — voir le README, section « Box ».',
+      notConnected: 'Box n’est pas connecté.',
+      sessionExpired: 'La session Box a expiré, veuillez vous reconnecter.',
+      refreshFailed: 'Box : échec du renouvellement du jeton (statut {status})',
+      downloadFailed: 'Box : impossible de télécharger « {name} » (erreur réseau/CORS) — voir le README, section « Box »',
+      fileTooLarge:
+        'Le fichier dépasse {maxMb} Mo — les fichiers Box sont intégrés en URL data car il n’y a pas de proxy de téléchargement, et ce fichier est trop volumineux pour cela.',
+      uploadFailed: 'Box : échec de l’envoi (statut {status})',
+      uploadNetworkError: 'Box : erreur réseau lors de l’envoi du fichier',
+    },
+    sessionNote: 'Les jetons de rafraîchissement Box sont valables 60 jours maximum et sont remplacés à chaque utilisation — si vous n’utilisez pas ce site pendant 60 jours d’affilée, une nouvelle connexion sera nécessaire. Ce fournisseur dépend aussi d’un petit serveur à vous pour garder le Client Secret de Box hors du navigateur.',
   },
   s3: {
     connectMenuItem: 'Connecter S3',

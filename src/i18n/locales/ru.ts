@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Не удалось прочитать файл',
     },
   },
+  settings: {
+    tabButton: 'Подключённые аккаунты',
+    title: 'Подключённые аккаунты',
+    empty: 'Пока ни один провайдер здесь не поддерживает вход через App Key/Client ID.',
+    authenticatedAt: 'Авторизовано {date}',
+    authenticatedAtUnknown: 'Дата авторизации неизвестна',
+    notConnected: 'Не подключено',
+    tokenExpiresIn: 'Токен истекает через {time}',
+    tokenExpired: 'Токен истёк — обновится автоматически при следующем действии',
+    close: 'Закрыть',
+  },
   dropbox: {
     setup: {
       step1: 'Откройте Dropbox App Console и нажмите «Create app».',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: загрузка не удалась (код {status})',
       uploadNetworkError: 'Dropbox: сетевая ошибка при загрузке файла',
     },
+    sessionNote: 'Сессия Dropbox не ограничена по времени: остаётся действительной, пока вы не выйдете сами или не отзовёте доступ в настройках самого Dropbox.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: загрузка не удалась (код {status})',
       uploadNetworkError: 'Google Drive: сетевая ошибка при загрузке файла',
     },
+    sessionNote: 'Сессия Google Drive обновляется автоматически (примерно раз в час), пока вы остаётесь авторизованы в аккаунте Google в этом браузере.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: загрузка не удалась (код {status})',
       uploadNetworkError: 'OneDrive: сетевая ошибка при загрузке файла',
     },
+    sessionNote: 'Microsoft ограничивает сессию для приложений, работающих в браузере (SPA), максимум 24 часами — после этого потребуется войти заново. Это ограничение самой платформы Microsoft, а не плагина.',
+  },
+  box: {
+    setup: {
+      step1: 'Откройте Box Developer Console и создайте новое приложение с аутентификацией OAuth 2.0 (User) — не Server Authentication (JWT/CCG), это нельзя изменить позже.',
+      step2Server: 'В отличие от Dropbox, Google Drive и OneDrive, для входа через Box обязательно нужен Client Secret, а сам Box предупреждает: этот секрет нельзя держать в браузерном коде — поэтому провайдеру нужен небольшой собственный сервер, который его хранит (опция tokenEndpoint ниже; готовый пример есть в README, раздел «Box»).',
+      step3: 'На странице Configuration приложения скопируйте Client ID и Client Secret. Client ID вставьте в поле ниже — Client Secret кладите только в переменные окружения своего сервера, сюда его вставлять не нужно.',
+      step4WithRedirect: 'На той же странице Configuration, в разделе Redirect URIs, вставьте это и нажмите Save:',
+      step4NoRedirect: 'На той же странице Configuration, в разделе Redirect URIs, добавьте полный URL страницы public/box-callback.html на вашем домене — автоматически определить его не удалось (см. redirectUri в опциях провайдера).',
+      step5WithOrigin: 'Там же, на странице Configuration, прокрутите до CORS Domains и добавьте этот origin (нужен, чтобы браузер мог обращаться к Box API напрямую):',
+      step5NoOrigin: 'Там же, на странице Configuration, прокрутите до CORS Domains и добавьте точный origin (протокол + домен + порт), с которого отдаётся сайт — автоматически определить его не удалось.',
+      step6: 'В разделе Application Scopes включите «Read and write all files and folders stored in Box» (или Read-only, если загрузка/удаление не нужны).',
+      step7: 'Вставьте Client ID в поле ниже.',
+    },
+    error: {
+      exchangeCode: 'Box: не удалось обменять code на токен (код {status})',
+      requireClientId: 'Сначала сохраните Client ID (см. мастер настройки).',
+      requireRedirectUri:
+        'Не удалось определить redirectUri автоматически. Передайте его явно в опциях BoxProvider (нужно, если плагин подключён через <script type="module"> или бандлер).',
+      requireTokenEndpoint: 'BoxProvider требует опцию tokenEndpoint (небольшой собственный сервер, который хранит Client Secret Box) — см. README, раздел «Box».',
+      notConnected: 'Box не подключён.',
+      sessionExpired: 'Сессия Box истекла, войдите снова.',
+      refreshFailed: 'Box: не удалось обновить токен (код {status})',
+      downloadFailed: 'Box: не удалось скачать «{name}» (сетевая ошибка или CORS) — см. README, раздел «Box»',
+      fileTooLarge:
+        'Файл больше {maxMb} МБ — файлы Box вставляются как data URL, поскольку прокси для скачивания нет, а этот файл для этого слишком большой.',
+      uploadFailed: 'Box: загрузка не удалась (код {status})',
+      uploadNetworkError: 'Box: сетевая ошибка при загрузке файла',
+    },
+    sessionNote: 'Refresh-токен Box действителен максимум 60 дней и заменяется новым при каждом использовании — если не заходить на сайт 60 дней подряд, потребуется войти заново. Этому провайдеру также нужен собственный небольшой сервер, чтобы Client Secret Box не попадал в браузер.',
   },
   s3: {
     connectMenuItem: 'Подключить S3',

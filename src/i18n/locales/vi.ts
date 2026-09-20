@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Không thể đọc tệp',
     },
   },
+  settings: {
+    tabButton: 'Tài khoản đã kết nối',
+    title: 'Tài khoản đã kết nối',
+    empty: 'Chưa có nhà cung cấp nào ở đây hỗ trợ đăng nhập bằng App Key/Client ID.',
+    authenticatedAt: 'Đã ủy quyền vào {date}',
+    authenticatedAtUnknown: 'Không rõ ngày ủy quyền',
+    notConnected: 'Chưa kết nối',
+    tokenExpiresIn: 'Token sẽ hết hạn sau {time}',
+    tokenExpired: 'Token đã hết hạn — sẽ tự động làm mới ở hành động tiếp theo',
+    close: 'Đóng',
+  },
   dropbox: {
     setup: {
       step1: 'Mở Dropbox App Console và nhấp vào "Create app".',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: tải lên không thành công (trạng thái {status})',
       uploadNetworkError: 'Dropbox: lỗi mạng khi tải tệp lên',
     },
+    sessionNote: 'Phiên Dropbox không có giới hạn thời gian: vẫn còn hiệu lực cho đến khi bạn đăng xuất hoặc thu hồi quyền truy cập trong chính cài đặt của Dropbox.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: tải lên không thành công (trạng thái {status})',
       uploadNetworkError: 'Google Drive: lỗi mạng khi tải tệp lên',
     },
+    sessionNote: 'Phiên Google Drive tự động làm mới (khoảng mỗi giờ) miễn là bạn vẫn đăng nhập vào tài khoản Google trên trình duyệt này.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: tải lên không thành công (trạng thái {status})',
       uploadNetworkError: 'OneDrive: lỗi mạng khi tải tệp lên',
     },
+    sessionNote: 'Microsoft giới hạn phiên của các ứng dụng chạy trên trình duyệt (SPA) tối đa 24 giờ — sau đó bạn cần đăng nhập lại. Đây là giới hạn của chính nền tảng Microsoft, không phải của plugin.',
+  },
+  box: {
+    setup: {
+      step1: 'Mở Box Developer Console và tạo một ứng dụng mới với xác thực OAuth 2.0 (User) — không phải Server Authentication (JWT/CCG), vì không thể đổi lại sau này.',
+      step2Server: 'Khác với Dropbox, Google Drive và OneDrive, Box bắt buộc phải có Client Secret để đăng nhập, và chính Box cũng cảnh báo rằng bí mật này không bao giờ được đặt trong mã trình duyệt — vì vậy nhà cung cấp này cần một máy chủ nhỏ của riêng bạn để lưu giữ nó (tùy chọn tokenEndpoint bên dưới; có ví dụ dùng ngay trong README, mục "Box").',
+      step3: 'Trên trang Configuration của ứng dụng, sao chép Client ID và Client Secret. Dán Client ID vào bên dưới — chỉ lưu Client Secret trong biến môi trường của máy chủ bạn, không bao giờ dán vào đây.',
+      step4WithRedirect: 'Trên cùng trang Configuration, tại Redirect URIs, dán mục này rồi bấm Save:',
+      step4NoRedirect: 'Trên cùng trang Configuration, tại Redirect URIs, thêm URL đầy đủ của trang public/box-callback.html trên tên miền của bạn — không thể tự động phát hiện (xem redirectUri trong tùy chọn nhà cung cấp).',
+      step5WithOrigin: 'Vẫn ở trang Configuration, cuộn xuống CORS Domains và thêm origin này (cần thiết để trình duyệt gọi trực tiếp API của Box):',
+      step5NoOrigin: 'Vẫn ở trang Configuration, cuộn xuống CORS Domains và thêm đúng origin (giao thức + tên miền + cổng) mà trang web này được phục vụ — không thể tự động phát hiện.',
+      step6: 'Trong Application Scopes, bật "Read and write all files and folders stored in Box" (hoặc Read-only nếu bạn không cần tải lên/xóa).',
+      step7: 'Dán Client ID vào ô bên dưới.',
+    },
+    error: {
+      exchangeCode: 'Box: không thể đổi code lấy token (trạng thái {status})',
+      requireClientId: 'Hãy lưu Client ID trước (xem trình hướng dẫn thiết lập).',
+      requireRedirectUri:
+        'Không thể tự động xác định redirectUri. Hãy chỉ định rõ trong tùy chọn BoxProvider (cần thiết khi plugin được tải qua <script type="module"> hoặc trình đóng gói).',
+      requireTokenEndpoint: 'BoxProvider cần tùy chọn tokenEndpoint (một máy chủ nhỏ của riêng bạn lưu giữ Client Secret của Box) — xem README, mục "Box".',
+      notConnected: 'Box chưa được kết nối.',
+      sessionExpired: 'Phiên Box đã hết hạn, vui lòng đăng nhập lại.',
+      refreshFailed: 'Box: không thể làm mới token (trạng thái {status})',
+      downloadFailed: 'Box: không thể tải xuống "{name}" (lỗi mạng/CORS) — xem README, mục "Box"',
+      fileTooLarge:
+        'Tệp lớn hơn {maxMb} MB — do không có proxy tải xuống, tệp Box được chèn dưới dạng URL data, và tệp này quá lớn để làm vậy.',
+      uploadFailed: 'Box: tải lên không thành công (trạng thái {status})',
+      uploadNetworkError: 'Box: lỗi mạng khi tải tệp lên',
+    },
+    sessionNote: 'Token làm mới của Box có hiệu lực tối đa 60 ngày và được thay bằng token mới mỗi lần sử dụng — nếu bạn không dùng trang này trong 60 ngày liên tục, bạn sẽ phải đăng nhập lại. Nhà cung cấp này cũng phụ thuộc vào một máy chủ nhỏ của riêng bạn để giữ Client Secret của Box không lộ ra trình duyệt.',
   },
   s3: {
     connectMenuItem: 'Kết nối S3',

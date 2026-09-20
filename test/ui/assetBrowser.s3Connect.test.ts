@@ -192,9 +192,14 @@ describe('AssetBrowser — removing a dynamically-connected S3 tab', () => {
     expect(container.querySelectorAll('.gca-tab')).toHaveLength(2);
 
     const removeBtn = container.querySelectorAll<HTMLElement>('.gca-tab-wrap')[1].querySelector<HTMLElement>('.gca-tab__remove')!;
+    expect(removeBtn.textContent).toBe('×');
     removeBtn.click(); // first click — confirm state only
     expect(container.querySelectorAll('.gca-tab')).toHaveLength(2);
     expect(removeBtn.classList.contains('gca-tab__remove--confirm')).toBe(true);
+    // Регрессия: раньше первый клик не менял НИЧЕГО видимого на самой
+    // кнопке (только title/aria-label) — визуально клик выглядел так,
+    // будто он ничего не сделал. Символ обязан смениться на "?".
+    expect(removeBtn.textContent).toBe('?');
 
     removeBtn.click(); // second click — actually removes
     const tabs = container.querySelectorAll<HTMLElement>('.gca-tab');

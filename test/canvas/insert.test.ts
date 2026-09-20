@@ -18,12 +18,13 @@ function fakeComponent(index: number, parent: Component | null): Component {
   return comp;
 }
 
-function fakeEditor(opts: { selected: Component | null; wrapper: Component | null }): Editor {
+function fakeEditor(opts: { selected: Component | null; wrapper: Component | null; scrollTo?: ReturnType<typeof vi.fn> }): Editor {
   const select = vi.fn();
   return {
     getSelected: () => opts.selected,
     getWrapper: () => opts.wrapper,
     select,
+    ...(opts.scrollTo ? { Canvas: { scrollTo: opts.scrollTo } } : {}),
   } as unknown as Editor;
 }
 
@@ -54,5 +55,22 @@ describe('insertAfterSelectionOrEnd', () => {
   it('throws when the editor has no wrapper at all (defensive — should never happen in a working editor)', () => {
     const editor = fakeEditor({ selected: null, wrapper: null });
     expect(() => insertAfterSelectionOrEnd(editor, { type: 'image' })).toThrow(/getWrapper\(\) is unavailable/);
+  });
+
+  it('scrolls the canvas to the inserted component (regression: inserting via button/click with no selection landed at the end of the page and was invisible unless the user scrolled there manually)', () => {
+    const wrapper = fakeComponent(0, null);
+    const scrollTo = vi.fn();
+    const editor = fakeEditor({ selected: null, wrapper, scrollTo });
+
+    const inserted = insertAfterSelectionOrEnd(editor, { type: 'image', src: 'x' });
+
+    expect(scrollTo).toHaveBeenCalledWith(inserted, { behavior: 'smooth' });
+  });
+
+  it('does not throw when editor.Canvas.scrollTo is unavailable (e.g. no real canvas frame)', () => {
+    const wrapper = fakeComponent(0, null);
+    const editor = fakeEditor({ selected: null, wrapper }); // no Canvas at all
+
+    expect(() => insertAfterSelectionOrEnd(editor, { type: 'image', src: 'x' })).not.toThrow();
   });
 });

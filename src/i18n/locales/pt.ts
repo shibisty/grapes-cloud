@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Não foi possível ler o ficheiro',
     },
   },
+  settings: {
+    tabButton: 'Contas ligadas',
+    title: 'Contas ligadas',
+    empty: 'Nenhum fornecedor aqui suporta ainda iniciar sessão com App Key/Client ID.',
+    authenticatedAt: 'Autorizado em {date}',
+    authenticatedAtUnknown: 'Data de autorização desconhecida',
+    notConnected: 'Não ligado',
+    tokenExpiresIn: 'O token expira em {time}',
+    tokenExpired: 'O token expirou — será renovado automaticamente na próxima ação',
+    close: 'Fechar',
+  },
   dropbox: {
     setup: {
       step1: 'Abra a Dropbox App Console e clique em «Create app».',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: o carregamento falhou (estado {status})',
       uploadNetworkError: 'Dropbox: erro de rede ao carregar o ficheiro',
     },
+    sessionNote: 'A sessão do Dropbox não tem limite de tempo: mantém-se válida até terminar sessão ou revogar o acesso nas próprias definições do Dropbox.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: o carregamento falhou (estado {status})',
       uploadNetworkError: 'Google Drive: erro de rede ao carregar o ficheiro',
     },
+    sessionNote: 'A sessão do Google Drive renova-se automaticamente (aproximadamente a cada hora) enquanto permanecer com sessão iniciada na sua conta Google neste navegador.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: o carregamento falhou (estado {status})',
       uploadNetworkError: 'OneDrive: erro de rede ao carregar o ficheiro',
     },
+    sessionNote: 'A Microsoft limita a 24 horas a sessão de aplicações executadas no navegador (SPA) — depois disso é preciso iniciar sessão novamente. Esta é uma limitação da própria plataforma Microsoft, não do plugin.',
+  },
+  box: {
+    setup: {
+      step1: 'Abra a Box Developer Console e crie uma nova app com autenticação OAuth 2.0 (User) — não Server Authentication (JWT/CCG), que não pode ser alterada depois.',
+      step2Server: 'Ao contrário do Dropbox, Google Drive e OneDrive, o Box exige um Client Secret para iniciar sessão, e o próprio Box avisa que esse segredo nunca deve estar em código do navegador — por isso este fornecedor precisa de um pequeno servidor próprio que o guarde (opção tokenEndpoint abaixo; há um exemplo pronto a usar no README, secção «Box»).',
+      step3: 'Na página Configuration da app, copie o Client ID e o Client Secret. Cole o Client ID abaixo — guarde o Client Secret apenas nas variáveis de ambiente do seu servidor, nunca aqui.',
+      step4WithRedirect: 'Na mesma página Configuration, em Redirect URIs, cole isto e clique em Save:',
+      step4NoRedirect: 'Na mesma página Configuration, em Redirect URIs, adicione o URL completo da página public/box-callback.html no seu domínio — não foi possível detetá-lo automaticamente (veja redirectUri nas opções do fornecedor).',
+      step5WithOrigin: 'Ainda na página Configuration, role até CORS Domains e adicione este origin (necessário para o navegador chamar a API do Box diretamente):',
+      step5NoOrigin: 'Ainda na página Configuration, role até CORS Domains e adicione o origin exato (protocolo + domínio + porta) a partir do qual este site é servido — não foi possível detetá-lo automaticamente.',
+      step6: 'Em Application Scopes, ative «Read and write all files and folders stored in Box» (ou Read-only, se não precisar de carregar/eliminar ficheiros).',
+      step7: 'Cole o Client ID no campo abaixo.',
+    },
+    error: {
+      exchangeCode: 'Box: não foi possível trocar o code por um token (estado {status})',
+      requireClientId: 'Guarde primeiro um Client ID (veja o assistente de configuração).',
+      requireRedirectUri:
+        'Não foi possível determinar automaticamente o redirectUri. Indique-o explicitamente nas opções do BoxProvider (necessário se o plugin for carregado via <script type="module"> ou um bundler).',
+      requireTokenEndpoint: 'O BoxProvider requer a opção tokenEndpoint (um pequeno servidor próprio que guarda o Client Secret do Box) — veja o README, secção «Box».',
+      notConnected: 'O Box não está ligado.',
+      sessionExpired: 'A sessão do Box expirou, inicie sessão novamente.',
+      refreshFailed: 'Box: não foi possível renovar o token (estado {status})',
+      downloadFailed: 'Box: não foi possível transferir «{name}» (erro de rede/CORS) — veja o README, secção «Box»',
+      fileTooLarge:
+        'O ficheiro tem mais de {maxMb} MB — os ficheiros do Box são inseridos como URL de dados porque não existe um proxy de transferência, e este ficheiro é demasiado grande para isso.',
+      uploadFailed: 'Box: o carregamento falhou (estado {status})',
+      uploadNetworkError: 'Box: erro de rede ao carregar o ficheiro',
+    },
+    sessionNote: 'Os tokens de atualização do Box são válidos por, no máximo, 60 dias e são substituídos por um novo a cada utilização — se não usar este site durante 60 dias seguidos, terá de iniciar sessão novamente. Este fornecedor também depende de um pequeno servidor próprio para manter o Client Secret do Box fora do navegador.',
   },
   s3: {
     connectMenuItem: 'Ligar S3',

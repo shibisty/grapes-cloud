@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: '파일을 읽지 못했습니다',
     },
   },
+  settings: {
+    tabButton: '연결된 계정',
+    title: '연결된 계정',
+    empty: '아직 App Key/Client ID로 로그인할 수 있는 제공자가 없습니다.',
+    authenticatedAt: '{date}에 인증됨',
+    authenticatedAtUnknown: '인증 날짜를 알 수 없음',
+    notConnected: '연결되지 않음',
+    tokenExpiresIn: '토큰이 {time} 후에 만료됩니다',
+    tokenExpired: '토큰이 만료되었습니다 — 다음 작업 시 자동으로 갱신됩니다',
+    close: '닫기',
+  },
   dropbox: {
     setup: {
       step1: 'Dropbox App Console을 열고 "Create app"을 클릭하세요.',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: 업로드에 실패했습니다(상태 코드 {status})',
       uploadNetworkError: 'Dropbox: 파일 업로드 중 네트워크 오류가 발생했습니다',
     },
+    sessionNote: 'Dropbox 세션에는 시간 제한이 없습니다. 로그아웃하거나 Dropbox 설정에서 직접 액세스를 취소할 때까지 유효합니다.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: 업로드에 실패했습니다(상태 코드 {status})',
       uploadNetworkError: 'Google Drive: 파일 업로드 중 네트워크 오류가 발생했습니다',
     },
+    sessionNote: '이 브라우저에서 Google 계정에 로그인된 상태를 유지하는 한 Google Drive 세션은 자동으로 (약 1시간마다) 갱신됩니다.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: 업로드에 실패했습니다(상태 코드 {status})',
       uploadNetworkError: 'OneDrive: 파일 업로드 중 네트워크 오류가 발생했습니다',
     },
+    sessionNote: 'Microsoft는 브라우저에서 실행되는 앱(SPA)의 세션을 최대 24시간으로 제한합니다 — 이후에는 다시 로그인해야 합니다. 이는 플러그인이 아닌 Microsoft 플랫폼 자체의 제한입니다.',
+  },
+  box: {
+    setup: {
+      step1: 'Box Developer Console를 열고 OAuth 2.0(User) 인증으로 새 앱을 만드세요 — 나중에 변경할 수 없는 Server Authentication(JWT/CCG)이 아닙니다.',
+      step2Server: 'Dropbox, Google Drive, OneDrive와 달리 Box는 로그인을 위해 반드시 Client Secret이 필요하며, Box 자체도 이 비밀 값이 브라우저 코드에 있으면 안 된다고 경고합니다 — 그래서 이 공급자는 이를 보관할 자체 소형 서버가 필요합니다(아래 tokenEndpoint 옵션 참고, 바로 쓸 수 있는 예제는 README의 "Box" 섹션에 있습니다).',
+      step3: '앱의 Configuration 페이지에서 Client ID와 Client Secret을 복사하세요. Client ID는 아래에 붙여넣고, Client Secret은 서버의 환경 변수에만 보관하고 여기에는 절대 입력하지 마세요.',
+      step4WithRedirect: '같은 Configuration 페이지의 Redirect URIs에 이것을 붙여넣고 Save를 클릭하세요:',
+      step4NoRedirect: '같은 Configuration 페이지의 Redirect URIs에 사용 중인 도메인의 public/box-callback.html 페이지 전체 URL을 추가하세요 — 자동으로 감지할 수 없었습니다(공급자 옵션의 redirectUri 참고).',
+      step5WithOrigin: '같은 Configuration 페이지에서 CORS Domains까지 스크롤한 뒤 이 origin을 추가하세요(브라우저가 Box API를 직접 호출하려면 필요합니다):',
+      step5NoOrigin: '같은 Configuration 페이지에서 CORS Domains까지 스크롤한 뒤 이 사이트가 제공되는 정확한 origin(프로토콜 + 도메인 + 포트)을 추가하세요 — 자동으로 감지할 수 없었습니다.',
+      step6: 'Application Scopes에서 "Read and write all files and folders stored in Box"를 활성화하세요(업로드/삭제가 필요 없으면 Read-only).',
+      step7: '아래 필드에 Client ID를 붙여넣으세요.',
+    },
+    error: {
+      exchangeCode: 'Box: code를 토큰으로 교환하지 못했습니다(상태 {status})',
+      requireClientId: '먼저 Client ID를 저장하세요(설정 마법사 참고).',
+      requireRedirectUri:
+        'redirectUri를 자동으로 확인할 수 없습니다. BoxProvider 옵션에서 명시적으로 지정하세요(플러그인이 <script type="module">나 번들러로 로드될 때 필요합니다).',
+      requireTokenEndpoint: 'BoxProvider에는 tokenEndpoint 옵션이 필요합니다(Box Client Secret을 보관하는 자체 소형 서버) — README의 "Box" 섹션을 참고하세요.',
+      notConnected: 'Box가 연결되어 있지 않습니다.',
+      sessionExpired: 'Box 세션이 만료되었습니다. 다시 로그인해 주세요.',
+      refreshFailed: 'Box: 토큰을 갱신하지 못했습니다(상태 {status})',
+      downloadFailed: 'Box: "{name}" 다운로드에 실패했습니다(네트워크/CORS 오류) — README의 "Box" 섹션을 참고하세요',
+      fileTooLarge:
+        '파일이 {maxMb}MB보다 큽니다 — 다운로드 프록시가 없어 Box 파일은 data URL로 삽입되는데, 이 파일은 그러기에는 너무 큽니다.',
+      uploadFailed: 'Box: 업로드에 실패했습니다(상태 {status})',
+      uploadNetworkError: 'Box: 파일 업로드 중 네트워크 오류가 발생했습니다',
+    },
+    sessionNote: 'Box 리프레시 토큰은 최대 60일간 유효하며 사용할 때마다 새 토큰으로 교체됩니다 — 이 사이트를 60일 연속으로 사용하지 않으면 다시 로그인해야 합니다. 이 공급자는 또한 Box Client Secret이 브라우저에 노출되지 않도록 자체 소형 서버에 의존합니다.',
   },
   s3: {
     connectMenuItem: 'S3 연결',

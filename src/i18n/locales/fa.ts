@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'خواندن فایل ناموفق بود',
     },
   },
+  settings: {
+    tabButton: 'حساب‌های متصل',
+    title: 'حساب‌های متصل',
+    empty: 'هیچ ارائه‌دهنده‌ای هنوز از ورود با App Key/Client ID پشتیبانی نمی‌کند.',
+    authenticatedAt: 'در تاریخ {date} مجاز شد',
+    authenticatedAtUnknown: 'تاریخ مجازسازی نامشخص است',
+    notConnected: 'متصل نیست',
+    tokenExpiresIn: 'توکن تا {time} دیگر منقضی می‌شود',
+    tokenExpired: 'توکن منقضی شده است — در اقدام بعدی به‌طور خودکار تازه می‌شود',
+    close: 'بستن',
+  },
   dropbox: {
     setup: {
       step1: 'Dropbox App Console را باز کنید و روی «Create app» کلیک کنید.',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: بارگذاری ناموفق بود (وضعیت {status})',
       uploadNetworkError: 'Dropbox: خطای شبکه هنگام بارگذاری فایل',
     },
+    sessionNote: 'نشست Dropbox محدودیت زمانی ندارد: تا زمانی که خارج نشوید یا دسترسی را در تنظیمات خود Dropbox لغو نکنید معتبر می‌ماند.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: بارگذاری ناموفق بود (وضعیت {status})',
       uploadNetworkError: 'Google Drive: خطای شبکه هنگام بارگذاری فایل',
     },
+    sessionNote: 'نشست Google Drive به‌طور خودکار (تقریباً هر ساعت) تازه می‌شود، تا زمانی که در این مرورگر همچنان وارد حساب Google خود باشید.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: بارگذاری ناموفق بود (وضعیت {status})',
       uploadNetworkError: 'OneDrive: خطای شبکه هنگام بارگذاری فایل',
     },
+    sessionNote: 'Microsoft نشست برنامه‌های مرورگرمحور (SPA) را حداکثر به ۲۴ ساعت محدود می‌کند — پس از آن باید دوباره وارد شوید. این محدودیت خود پلتفرم Microsoft است، نه افزونه.',
+  },
+  box: {
+    setup: {
+      step1: 'Box Developer Console را باز کنید و یک اپلیکیشن جدید با احراز هویت OAuth 2.0 (User) بسازید — نه Server Authentication (JWT/CCG) که بعداً قابل تغییر نیست.',
+      step2Server: 'برخلاف Dropbox، Google Drive و OneDrive، Box برای ورود حتماً به Client Secret نیاز دارد و خود Box هشدار می‌دهد که این رمز هرگز نباید در کد سمت مرورگر باشد — به همین دلیل این ارائه‌دهنده به یک سرور کوچک اختصاصی برای نگهداری آن نیاز دارد (گزینه tokenEndpoint در زیر؛ نمونه‌ای آماده در README، بخش «Box» موجود است).',
+      step3: 'در صفحه Configuration اپلیکیشن، Client ID و Client Secret را کپی کنید. Client ID را در زیر جای‌گذاری کنید — Client Secret را فقط در متغیرهای محیطی سرور خودتان نگه دارید، هرگز اینجا.',
+      step4WithRedirect: 'در همان صفحه Configuration، زیر Redirect URIs، این را جای‌گذاری کرده و روی Save کلیک کنید:',
+      step4NoRedirect: 'در همان صفحه Configuration، زیر Redirect URIs، آدرس کامل صفحه public/box-callback.html را در دامنه خود اضافه کنید — تشخیص خودکار آن ممکن نشد (به redirectUri در تنظیمات ارائه‌دهنده مراجعه کنید).',
+      step5WithOrigin: 'همچنان در صفحه Configuration، به CORS Domains بروید و این origin را اضافه کنید (لازم است تا مرورگر بتواند مستقیماً با Box API ارتباط برقرار کند):',
+      step5NoOrigin: 'همچنان در صفحه Configuration، به CORS Domains بروید و origin دقیق (پروتکل + دامنه + پورت) این سایت را اضافه کنید — تشخیص خودکار آن ممکن نشد.',
+      step6: 'زیر Application Scopes گزینه «Read and write all files and folders stored in Box» را فعال کنید (یا Read-only، اگر به آپلود/حذف نیاز ندارید).',
+      step7: 'Client ID را در فیلد زیر جای‌گذاری کنید.',
+    },
+    error: {
+      exchangeCode: 'Box: تبدیل code به توکن ناموفق بود (وضعیت {status})',
+      requireClientId: 'ابتدا یک Client ID ذخیره کنید (به راهنمای تنظیم مراجعه کنید).',
+      requireRedirectUri:
+        'تشخیص خودکار redirectUri ممکن نشد. آن را صریحاً در تنظیمات BoxProvider مشخص کنید (در صورت بارگذاری افزونه از طریق <script type="module"> یا باندلر لازم است).',
+      requireTokenEndpoint: 'BoxProvider به گزینه tokenEndpoint نیاز دارد (یک سرور کوچک اختصاصی که Client Secret مربوط به Box را نگه می‌دارد) — به README، بخش «Box» مراجعه کنید.',
+      notConnected: 'Box متصل نیست.',
+      sessionExpired: 'نشست Box منقضی شده است، دوباره وارد شوید.',
+      refreshFailed: 'Box: تازه‌سازی توکن ناموفق بود (وضعیت {status})',
+      downloadFailed: 'Box: دانلود «{name}» ناموفق بود (خطای شبکه/CORS) — به README، بخش «Box» مراجعه کنید',
+      fileTooLarge:
+        'حجم فایل بیشتر از {maxMb} مگابایت است — از آنجا که پراکسی دانلودی وجود ندارد، فایل‌های Box به‌صورت data URL درج می‌شوند و این فایل برای این کار بیش از حد بزرگ است.',
+      uploadFailed: 'Box: آپلود ناموفق بود (وضعیت {status})',
+      uploadNetworkError: 'Box: خطای شبکه هنگام آپلود فایل',
+    },
+    sessionNote: 'توکن‌های تازه‌سازی Box حداکثر تا ۶۰ روز معتبرند و در هر استفاده با توکن جدیدی جایگزین می‌شوند — اگر ۶۰ روز پیاپی از این سایت استفاده نکنید، باید دوباره وارد شوید. این ارائه‌دهنده همچنین به یک سرور کوچک اختصاصی وابسته است تا Client Secret مربوط به Box وارد مرورگر نشود.',
   },
   s3: {
     connectMenuItem: 'اتصال S3',

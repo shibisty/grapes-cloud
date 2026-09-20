@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Dosya okunamadı',
     },
   },
+  settings: {
+    tabButton: 'Bağlı hesaplar',
+    title: 'Bağlı hesaplar',
+    empty: 'Buradaki hiçbir sağlayıcı henüz App Key/Client ID ile girişi desteklemiyor.',
+    authenticatedAt: '{date} tarihinde yetkilendirildi',
+    authenticatedAtUnknown: 'Yetkilendirme tarihi bilinmiyor',
+    notConnected: 'Bağlı değil',
+    tokenExpiresIn: 'Jeton {time} içinde sona erecek',
+    tokenExpired: 'Jetonun süresi doldu — bir sonraki işlemde otomatik olarak yenilenecek',
+    close: 'Kapat',
+  },
   dropbox: {
     setup: {
       step1: 'Dropbox App Console’u açın ve "Create app" düğmesine tıklayın.',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: yükleme başarısız oldu (durum {status})',
       uploadNetworkError: 'Dropbox: dosya yüklenirken ağ hatası oluştu',
     },
+    sessionNote: 'Dropbox oturumunun süre sınırı yoktur: siz çıkış yapana veya erişimi Dropbox’ın kendi ayarlarından iptal edene kadar geçerli kalır.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: yükleme başarısız oldu (durum {status})',
       uploadNetworkError: 'Google Drive: dosya yüklenirken ağ hatası oluştu',
     },
+    sessionNote: 'Bu tarayıcıda Google hesabınızda oturum açık kaldığı sürece Google Drive oturumu otomatik olarak (yaklaşık her saat) yenilenir.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: yükleme başarısız oldu (durum {status})',
       uploadNetworkError: 'OneDrive: dosya yüklenirken ağ hatası oluştu',
     },
+    sessionNote: 'Microsoft, tarayıcıda çalışan uygulamaların (SPA) oturumunu en fazla 24 saatle sınırlar — bu sürenin ardından yeniden giriş yapmanız gerekir. Bu, eklentinin değil, Microsoft platformunun kendi sınırlamasıdır.',
+  },
+  box: {
+    setup: {
+      step1: 'Box Developer Console’u açın ve OAuth 2.0 (User) kimlik doğrulamasıyla yeni bir uygulama oluşturun — daha sonra değiştirilemeyen Server Authentication (JWT/CCG) değil.',
+      step2Server: 'Dropbox, Google Drive ve OneDrive’dan farklı olarak Box, oturum açmak için bir Client Secret gerektirir ve Box’ın kendisi bu sırrın asla tarayıcı kodunda bulunmaması gerektiği konusunda uyarır — bu yüzden bu sağlayıcının onu saklayacak küçük bir sunucuya ihtiyacı vardır (aşağıdaki tokenEndpoint seçeneği; hazır bir örnek README’de "Box" bölümünde bulunur).',
+      step3: 'Uygulamanın Configuration sayfasında Client ID ve Client Secret’ı kopyalayın. Client ID’yi aşağıya yapıştırın — Client Secret’ı yalnızca sunucunuzun ortam değişkenlerinde saklayın, buraya asla girmeyin.',
+      step4WithRedirect: 'Aynı Configuration sayfasında, Redirect URIs bölümüne bunu yapıştırın ve Save’e tıklayın:',
+      step4NoRedirect: 'Aynı Configuration sayfasında, Redirect URIs bölümüne kendi alan adınızdaki public/box-callback.html sayfasının tam adresini ekleyin — otomatik olarak algılanamadı (sağlayıcı seçeneklerindeki redirectUri’ye bakın).',
+      step5WithOrigin: 'Yine Configuration sayfasında CORS Domains bölümüne kaydırın ve bu origin’i ekleyin (tarayıcının Box API’sini doğrudan çağırabilmesi için gereklidir):',
+      step5NoOrigin: 'Yine Configuration sayfasında CORS Domains bölümüne kaydırın ve bu sitenin sunulduğu tam origin’i (protokol + alan adı + port) ekleyin — otomatik olarak algılanamadı.',
+      step6: 'Application Scopes altında "Read and write all files and folders stored in Box" seçeneğini etkinleştirin (yükleme/silme gerekmiyorsa Read-only).',
+      step7: 'Client ID’yi aşağıdaki alana yapıştırın.',
+    },
+    error: {
+      exchangeCode: 'Box: kod bir belirteçle değiştirilemedi (durum {status})',
+      requireClientId: 'Önce bir Client ID kaydedin (kurulum sihirbazına bakın).',
+      requireRedirectUri:
+        'redirectUri otomatik olarak belirlenemedi. Bunu BoxProvider seçeneklerinde açıkça belirtin (eklenti <script type="module"> veya bir paketleyici ile yükleniyorsa gereklidir).',
+      requireTokenEndpoint: 'BoxProvider, tokenEndpoint seçeneğini gerektirir (Box Client Secret’ını saklayan küçük bir sunucunuz) — README’deki "Box" bölümüne bakın.',
+      notConnected: 'Box bağlı değil.',
+      sessionExpired: 'Box oturumunun süresi doldu, lütfen tekrar giriş yapın.',
+      refreshFailed: 'Box: belirteç yenilenemedi (durum {status})',
+      downloadFailed: 'Box: "{name}" indirilemedi (ağ/CORS hatası) — README’deki "Box" bölümüne bakın',
+      fileTooLarge:
+        'Dosya {maxMb} MB’den büyük — indirme proxy’si olmadığı için Box dosyaları data URL olarak eklenir ve bu dosya bunun için çok büyük.',
+      uploadFailed: 'Box: yükleme başarısız oldu (durum {status})',
+      uploadNetworkError: 'Box: dosya yüklenirken ağ hatası oluştu',
+    },
+    sessionNote: 'Box yenileme belirteçleri en fazla 60 gün geçerlidir ve her kullanımda yenisiyle değiştirilir — bu siteyi 60 gün boyunca kullanmazsanız yeniden giriş yapmanız gerekir. Bu sağlayıcı ayrıca Box Client Secret’ını tarayıcının dışında tutmak için kendi küçük sunucunuza bağımlıdır.',
   },
   s3: {
     connectMenuItem: 'S3 bağlan',

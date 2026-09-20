@@ -1,14 +1,13 @@
 # grapesjs-cloud-assets
 
-[![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/cw/shibisty)
-
 A GrapesJS plugin: insert images, video, audio and documents from
 cloud storage through a single shared UI with tabs. The first tab is
 **"My files"** (the local source: assets already added to the
 editor, upload from disk, insert by direct URL); after that come the
-cloud tabs: **Dropbox**, **Google Drive** and **Microsoft OneDrive**
-are configured ahead of time by the site owner via
-`pluginsOpts.providers`, while **S3-compatible storage** (AWS S3
+cloud tabs: **Dropbox**, **Google Drive**, **Microsoft OneDrive** and
+**Box** are configured ahead of time by the site owner via
+`pluginsOpts.providers` (Box additionally needs a small server of its
+own — see "Box" below), while **S3-compatible storage** (AWS S3
 itself, MinIO, Wasabi, DigitalOcean Spaces, Cloudflare R2, etc.) is
 added with the **"+"** button at the end of the tab row by the
 visitor themselves — with no changes to the site's code, see
@@ -60,13 +59,13 @@ npm install grapesjs-cloud-assets
 
 ## Configuring cloud providers
 
-Neither Dropbox, Google, nor Microsoft offers a shared App Key/Client
-ID that would work on an arbitrary third-party domain without
-pre-registering it in their developer console — that's a limitation
-of the providers themselves, not something the plugin's code can work
-around (verified for the official native pickers too — they have the
-exact same requirement). Because of that, none of the three providers
-**accepts a key in its constructor**: whoever installs this plugin on
+Neither Dropbox, Google, Microsoft, nor Box offers a shared App
+Key/Client ID that would work on an arbitrary third-party domain
+without pre-registering it in their developer console — that's a
+limitation of the providers themselves, not something the plugin's
+code can work around (verified for the official native pickers too —
+they have the exact same requirement). Because of that, none of the
+four providers **accepts a key in its constructor**: whoever installs this plugin on
 their site sets up their own app in the provider's console and enters
 its key directly in the editor's UI — once, through a built-in setup
 wizard that appears on its own the first time the provider's tab is
@@ -163,22 +162,117 @@ Dropbox's; Microsoft doesn't document their exact lifetime
 (community reports suggest around an hour), so the provider
 conservatively assumes an hour via `expiresAt`.
 
+### Box
+
+Unlike Dropbox, Google Drive and OneDrive, **Box cannot be connected
+without a small server of your own.** This was checked directly
+against Box's official docs (developer.box.com), not assumed:
+Box's `/authorize` endpoint only accepts `response_type=code` (no
+implicit flow), and `POST /oauth2/token` requires a **Client Secret**
+for every exchange — both the initial authorization code AND every
+refresh — with no PKCE alternative for public/browser-only clients
+(unlike Dropbox and Microsoft's SPA app type, see `src/providers/pkce.ts`).
+Box's own documentation is explicit that this secret must never live
+in browser code, so there's no safe way to make this work the way
+Dropbox/Google/OneDrive do, entirely from the browser. `BoxProvider`'s
+constructor therefore takes a **required** `tokenEndpoint` option — the
+URL of a tiny server endpoint you host yourself, which holds the
+Client Secret and forwards the exchange to Box. It's a thin proxy, not
+a real backend integration — roughly:
+
+```js
+// POST { grant_type, code|refresh_token, redirect_uri? }, forwarded to
+// Box as-is, with the Client Secret added server-side (never sent to the browser).
+app.post('/api/box-token', express.json(), async (req, res) => {
+  const params = new URLSearchParams({
+    ...req.body,
+    client_id: process.env.BOX_CLIENT_ID,
+    client_secret: process.env.BOX_CLIENT_SECRET,
+  });
+  const boxRes = await fetch('https://api.box.com/oauth2/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params,
+  });
+  res.status(boxRes.status).json(await boxRes.json());
+});
+```
+
+**A ready-to-run implementation of exactly this ships in
+[`box-token-server/`](./box-token-server), right next to this
+plugin's own source** — its own README covers setup (`start.sh` /
+`start.bat`, an `.env.example` for the Client ID/Secret, CORS, and a
+production checklist). You have three options: run it as-is, use it
+as a reference to implement the same tiny proxy on your own backend
+in whatever language you already use (its README spells out the exact
+request/response contract `BoxProvider` expects), or skip Box
+entirely by simply not passing a `BoxProvider` — the other three
+cloud providers and S3 don't depend on it at all.
+
+Box refresh tokens are valid for **up to 60 days** and are **rotated**
+on every use (the old one stops working the moment a new one is
+issued) — the response your server relays back must include the new
+`refresh_token` every time, which `BoxProvider` then stores in place
+of the old one. There's no Microsoft-style hard ceiling shorter than
+that, but if the site genuinely isn't used for 60 days straight, the
+visitor will need to log in again.
+
+Setup wizard steps:
+
+1. Open the [Box Developer Console](https://app.box.com/developers/console) and create a new app with **OAuth 2.0 (User) authentication** — not Server Authentication (JWT/CCG), which can't be changed afterwards.
+2. On the app's **Configuration** page, copy the **Client ID** and **Client Secret**. The Client Secret goes only into your server's environment (`BOX_CLIENT_SECRET` in `box-token-server/.env`, if you're using the bundled server) — the wizard never asks for it.
+3. Still on Configuration, under **Redirect URIs**, add the URL the wizard fills in and lets you copy with one button — usually `.../public/box-callback.html` on the current domain.
+4. Scroll down to **CORS Domains** and add this site's origin — **required**, otherwise the browser can't call the Box API directly at all (Box's CORS support is opt-in per app, unlike Dropbox/Google, see [Box's CORS guide](https://developer.box.com/guides/security/cors)).
+5. Under **Application Scopes**, enable "Read and write all files and folders stored in Box" (or Read-only, if you don't need upload/delete).
+6. Copy the Client ID and paste it into the wizard's field.
+
+```ts
+import { BoxProvider } from 'grapesjs-cloud-assets';
+
+new BoxProvider({ tokenEndpoint: '/api/box-token' });
+```
+
+**Inserting files works differently from Dropbox/OneDrive, and for a
+documented reason.** Box's own file-content endpoint requires an
+`Authorization` header on every request and 302-redirects to
+`dl.boxcloud.com` — Box's docs confirm CORS support for `api.box.com`
+itself (step 4 above), but say nothing about whether that redirect
+target forwards the same CORS headers, so a plain authenticated
+`fetch()` reaching all the way through isn't guaranteed. Rather than
+ship something that might silently fail depending on the file, or
+build a whole second server-side download proxy beyond the minimal
+`tokenEndpoint` above, `BoxProvider.resolve()` uses the same approach
+as `GoogleDriveProvider`: it downloads the file through an
+authenticated request and turns it into a `data:` URL, capped at the
+same **10 MB** (`MAX_INLINE_BYTES`). A [Box shared link](https://developer.box.com/guides/file-sharing/shared-links/create-a-shared-link)
+was considered and rejected as an alternative: unlike a Dropbox
+temporary link, a Box shared link makes the file **openly accessible
+to anyone with the URL until manually revoked** — Box only lets
+*paid* accounts set an auto-expiry (`unshared_at`) — which is a much
+bigger side effect than showing a preview in your own editor. If a
+particular file's insert does fail with a CORS error (list/search/
+delete calling directly still work fine, since those only touch
+`api.box.com`), extending the same server from step above into a
+small authenticated-download proxy is the documented way out — see
+the comment on `BoxProvider.resolve()` in the source.
+
 ### Auto-detecting the redirect URI/origin
 
-The files `public/dropbox-callback.html` and
-`public/microsoft-callback.html` need to be copied once to your own
+The files `public/dropbox-callback.html`, `public/microsoft-callback.html`
+and `public/box-callback.html` need to be copied once to your own
 domain (wherever the editor runs) — e.g. from
 `node_modules/grapesjs-cloud-assets/public/`. If the plugin itself is
 loaded via a plain `<script src="...">` (as in the demo `index.html` —
 not `<script type="module">` and not through a bundler),
-`DropboxProvider`/`OneDriveProvider` figure out the right URL
-themselves, from their own script's address
+`DropboxProvider`/`OneDriveProvider`/`BoxProvider` figure out the
+right URL themselves, from their own script's address
 (`src/providers/ownScript.ts`) — the wizard will immediately show the
 correct value to copy. For an ESM/bundled build, auto-detection
 doesn't work (`document.currentScript` is always `null` for modules,
 per spec) — in that case pass it explicitly:
-`new DropboxProvider({ redirectUri: 'https://example.com/dropbox-callback.html' })`
-or `new OneDriveProvider({ redirectUri: 'https://example.com/microsoft-callback.html' })`.
+`new DropboxProvider({ redirectUri: 'https://example.com/dropbox-callback.html' })`,
+`new OneDriveProvider({ redirectUri: 'https://example.com/microsoft-callback.html' })`
+or `new BoxProvider({ tokenEndpoint: '/api/box-token', redirectUri: 'https://example.com/box-callback.html' })`.
 `GoogleDriveProvider` has no such option and needs no separate
 callback file — see the "Google Drive" section above.
 
@@ -263,7 +357,7 @@ new S3Provider({
 
 ```ts
 import grapesjs from 'grapesjs';
-import cloudAssets, { DropboxProvider, GoogleDriveProvider, OneDriveProvider } from 'grapesjs-cloud-assets';
+import cloudAssets, { DropboxProvider, GoogleDriveProvider, OneDriveProvider, BoxProvider } from 'grapesjs-cloud-assets';
 
 const editor = grapesjs.init({
   container: '#gjs',
@@ -274,6 +368,7 @@ const editor = grapesjs.init({
         new DropboxProvider(),
         new GoogleDriveProvider(),
         new OneDriveProvider(),
+        new BoxProvider({ tokenEndpoint: '/api/box-token' }), // needs a small server of your own — see "Box" above
         // S3-compatible storage usually ISN'T listed here — the visitor
         // connects it themselves with the "+" button in the tab row, see
         // the README section "S3-compatible storage". Add your own
@@ -297,7 +392,7 @@ enters it through the setup wizard, as described above.
 The plugin adds a button on the editor's top panel, plus one block
 per already-configured storage in the **Storage** category of the
 block panel — both the ones the site owner set via `providers` above
-(Dropbox, Google Drive, OneDrive, "My files") and the ones the
+(Dropbox, Google Drive, OneDrive, Box, "My files") and the ones the
 visitor connected themselves through the "Connect S3" popup (see the
 S3 section above). All of them open the same file-picker window
 (`src/canvas/picker.ts`) and insert the matching component
@@ -449,7 +544,3 @@ npm install
 npm run typecheck
 npm run build   # dist/grapesjs-cloud-assets.js (ESM) + .umd.cjs
 ```
-
-[![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/cw/shibisty)
-
-If this project helps you, consider supporting its development on Patreon ❤️

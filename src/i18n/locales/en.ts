@@ -107,6 +107,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Failed to read the file',
     },
   },
+  settings: {
+    tabButton: 'Connected accounts',
+    title: 'Connected accounts',
+    empty: 'No provider here supports logging in with an App Key/Client ID yet.',
+    authenticatedAt: 'Authorized on {date}',
+    authenticatedAtUnknown: 'Authorization date unknown',
+    notConnected: 'Not connected',
+    tokenExpiresIn: 'Token expires in {time}',
+    tokenExpired: 'Token expired — it will refresh automatically on the next action',
+    close: 'Close',
+  },
   dropbox: {
     setup: {
       step1: 'Open the Dropbox App Console and click "Create app".',
@@ -128,6 +139,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: upload failed (status {status})',
       uploadNetworkError: 'Dropbox: network error while uploading the file',
     },
+    sessionNote: 'The Dropbox session has no time limit: it stays valid until you log out or revoke access in Dropbox’s own settings.',
   },
   google: {
     setup: {
@@ -152,6 +164,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: upload failed (status {status})',
       uploadNetworkError: 'Google Drive: network error while uploading the file',
     },
+    sessionNote: 'The Google Drive session renews itself automatically (roughly every hour) as long as you stay signed in to your Google account in this browser.',
   },
   microsoft: {
     setup: {
@@ -182,6 +195,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: upload failed (status {status})',
       uploadNetworkError: 'OneDrive: network error while uploading the file',
     },
+    sessionNote: 'Microsoft caps the session for browser-based apps (SPA) at 24 hours — after that you’ll need to log in again. This is a limitation of Microsoft’s own platform, not the plugin.',
+  },
+  box: {
+    setup: {
+      step1: 'Open the Box Developer Console and create a new app using OAuth 2.0 (user) authentication — not Server Authentication (JWT/CCG), which cannot be changed later.',
+      step2Server: 'Unlike Dropbox, Google Drive and OneDrive, Box requires a Client Secret to complete login, and Box itself warns that secret must never live in browser code — so this provider needs a small server of your own to hold it (the tokenEndpoint option below; see the README section "Box" for a copy-pasteable example).',
+      step3: 'On the app\'s Configuration page, copy the Client ID and Client Secret. Paste the Client ID below — put the Client Secret only in your server\'s environment, never here.',
+      step4WithRedirect: 'On the same Configuration page, under Redirect URIs, paste this and click Save:',
+      step4NoRedirect: 'On the same Configuration page, under Redirect URIs, add the full URL of the public/box-callback.html page on your domain — it could not be detected automatically (see redirectUri in the provider options).',
+      step5WithOrigin: 'Still on the Configuration page, scroll down to CORS Domains and add this origin (needed for the browser to call the Box API directly):',
+      step5NoOrigin: 'Still on the Configuration page, scroll down to CORS Domains and add the exact origin (protocol + domain + port) this site is served from — it could not be detected automatically.',
+      step6: 'Under Application Scopes, enable "Read and write all files and folders stored in Box" (or Read-only, if you don\'t need upload/delete).',
+      step7: 'Paste the Client ID into the field below.',
+    },
+    error: {
+      exchangeCode: 'Box: failed to exchange the code for a token (status {status})',
+      requireClientId: 'Save a Client ID first (see the setup wizard).',
+      requireRedirectUri:
+        'Could not determine redirectUri automatically. Pass it explicitly in the BoxProvider options (needed when the plugin is loaded via <script type="module"> or a bundler).',
+      requireTokenEndpoint: 'BoxProvider needs a tokenEndpoint option (a small server of your own that keeps the Box Client Secret) — see README, section "Box".',
+      notConnected: 'Box is not connected.',
+      sessionExpired: 'The Box session expired, please log in again.',
+      refreshFailed: 'Box: failed to refresh the token (status {status})',
+      downloadFailed: 'Box: could not download "{name}" (network/CORS error) — see README, section "Box"',
+      fileTooLarge:
+        'The file is larger than {maxMb} MB — Box files are inlined as a data URL since there is no download proxy, so this file is too large to insert.',
+      uploadFailed: 'Box: upload failed (status {status})',
+      uploadNetworkError: 'Box: network error while uploading the file',
+    },
+    sessionNote: 'Box refresh tokens are valid for up to 60 days and are replaced every time they\'re used — if you don\'t use this site for 60 days straight you\'ll need to log in again. This provider also relies on your own small server to keep the Box Client Secret out of the browser.',
   },
   s3: {
     connectMenuItem: 'Connect S3',

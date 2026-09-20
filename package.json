@@ -1,7 +1,7 @@
 {
   "name": "grapesjs-cloud-assets",
   "version": "0.1.0",
-  "description": "GrapesJS Asset Manager plugin: browse and insert media from Dropbox, Google Drive, OneDrive and S3-compatible storage through one unified UI.",
+  "description": "GrapesJS Asset Manager plugin: browse and insert media from Dropbox, Google Drive, OneDrive, Box and S3-compatible storage through one unified UI.",
   "type": "module",
   "main": "./dist/grapesjs-cloud-assets.umd.cjs",
   "module": "./dist/grapesjs-cloud-assets.js",
@@ -17,6 +17,8 @@
     "dist",
     "public/dropbox-callback.html",
     "public/microsoft-callback.html",
+    "public/box-callback.html",
+    "box-token-server",
     "README.md"
   ],
   "scripts": {
@@ -25,10 +27,6 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shibisty/grapes-cloud.git"
   },
   "peerDependencies": {
     "grapesjs": ">=0.19.0 <1.0.0"

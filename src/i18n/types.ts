@@ -157,6 +157,35 @@ export interface CloudAssetsMessages {
       readFile: string;
     };
   };
+  /**
+   * Вкладка "Подключённые аккаунты" — шестерёнка в ряду вкладок рядом
+   * с "+" (см. `AssetBrowser.openSettingsModal`), НЕ путать с
+   * `common.settings` (то — меню "Выйти" у одного конкретного
+   * провайдера в тулбаре). Эта вкладка общая — по одной строке на
+   * каждого OAuth-провайдера (см. `StorageProvider.getSessionInfo`),
+   * и намеренно чисто информационная: без единой настройки, которая
+   * бы что-то навязывала поверх настоящего механизма токена (см.
+   * doc-комментарий `ProviderSessionInfo` в `types.ts`).
+   */
+  settings: {
+    /** title/aria-label самой кнопки-шестерёнки в ряду вкладок. */
+    tabButton: string;
+    /** Заголовок модалки. */
+    title: string;
+    /** Показывается, если ни один подключённый провайдер не поддерживает getSessionInfo (например, только "Свои файлы"/S3). */
+    empty: string;
+    /** {date} — уже отформatированная локализованная дата первого явного входа (см. AssetBrowser.formatDate). */
+    authenticatedAt: string;
+    /** Дата первого входа неизвестна — учётка авторизована в более старой версии плагина, ещё до появления этого поля. */
+    authenticatedAtUnknown: string;
+    /** Провайдер настроен (есть App Key/Client ID), но сейчас не авторизован. */
+    notConnected: string;
+    /** {time} — локализованная длительность (см. AssetBrowser.formatDuration), например "42 минуты". */
+    tokenExpiresIn: string;
+    /** Токен уже истёк, но это не проблема — провайдер сам обновит его (или явно попросит войти) при следующем реальном действии. */
+    tokenExpired: string;
+    close: string;
+  };
   dropbox: {
     setup: {
       step1: string;
@@ -181,6 +210,8 @@ export interface CloudAssetsMessages {
       uploadFailed: string;
       uploadNetworkError: string;
     };
+    /** Заметка в "Подключённые аккаунты" — см. `ProviderSessionInfo.sessionNoteKey`/`DropboxProvider.getSessionInfo`. */
+    sessionNote: string;
   };
   google: {
     setup: {
@@ -207,6 +238,8 @@ export interface CloudAssetsMessages {
       uploadFailed: string;
       uploadNetworkError: string;
     };
+    /** Заметка в "Подключённые аккаунты" — см. `ProviderSessionInfo.sessionNoteKey`/`GoogleDriveProvider.getSessionInfo`. */
+    sessionNote: string;
   };
   microsoft: {
     setup: {
@@ -257,6 +290,67 @@ export interface CloudAssetsMessages {
       uploadFailed: string;
       uploadNetworkError: string;
     };
+    /**
+     * Заметка в "Подключённые аккаунты" — см.
+     * `ProviderSessionInfo.sessionNoteKey`/`OneDriveProvider.getSessionInfo`.
+     * У OneDrive это не просто информационная реплика для симметрии с
+     * dropbox/google.sessionNote, а предупреждение о РЕАЛЬНОМ жёстком
+     * ограничении: Microsoft ограничивает refresh-токен для SPA
+     * (браузерных, без бэкенда/client_secret) приложений 24 часами —
+     * задокументировано самим Microsoft
+     * (learn.microsoft.com/entra/identity-platform/refresh-tokens),
+     * не обходится на стороне клиента и не имеет отношения к этому
+     * плагину. Именно это и есть настоящая причина жалобы "токен
+     * быстро умирает, приходится перелогиниваться в течения дня" —
+     * см. историю проекта.
+     */
+    sessionNote: string;
+  };
+  /**
+   * Единственный из четырёх облачных провайдеров, которому нужен
+   * собственный сервер владельца сайта (`BoxProviderOptions.tokenEndpoint`) —
+   * у Box нет ни PKCE, ни implicit-flow, обмен на токен обязательно
+   * требует client_secret (проверено по документации developer.box.com,
+   * см. doc-комментарий `BoxProvider`/`BoxProviderOptions`).
+   */
+  box: {
+    setup: {
+      step1: string;
+      /** Объясняет, ЗАЧЕМ нужен свой сервер (tokenEndpoint) — то, чего нет у Dropbox/Google/OneDrive. */
+      step2Server: string;
+      step3: string;
+      /** Показывается, когда redirectUri определился автоматически — перед `copyValue`. */
+      step4WithRedirect: string;
+      /** Показывается, когда redirectUri определить не удалось. */
+      step4NoRedirect: string;
+      /** CORS Domains в консоли Box — показывается, когда origin определился автоматически — перед `copyValue`. */
+      step5WithOrigin: string;
+      /** Показывается, когда origin определить не удалось. */
+      step5NoOrigin: string;
+      step6: string;
+      step7: string;
+    };
+    error: {
+      /** {status} — HTTP-код ответа. */
+      exchangeCode: string;
+      requireClientId: string;
+      requireRedirectUri: string;
+      /** tokenEndpoint не задан (или пуст) в опциях BoxProvider. */
+      requireTokenEndpoint: string;
+      notConnected: string;
+      sessionExpired: string;
+      /** {status} — HTTP-код ответа собственного tokenEndpoint владельца сайта. */
+      refreshFailed: string;
+      /** Не удалось скачать файл для вставки — обычно CORS на dl.boxcloud.com, см. doc-комментарий `BoxProvider.resolve()`. {name} — имя файла. */
+      downloadFailed: string;
+      /** {maxMb} — предел размера файла для вставки без отдельного сервера-прокси для скачивания. */
+      fileTooLarge: string;
+      /** {status} — HTTP-код ответа. */
+      uploadFailed: string;
+      uploadNetworkError: string;
+    };
+    /** Заметка в "Подключённые аккаунты" — см. `ProviderSessionInfo.sessionNoteKey`/`BoxProvider.getSessionInfo`. */
+    sessionNote: string;
   };
   /**
    * Попап "Подключить S3" (см. `AssetBrowser.openConnectS3Modal`) и

@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Αποτυχία ανάγνωσης του αρχείου',
     },
   },
+  settings: {
+    tabButton: 'Συνδεδεμένοι λογαριασμοί',
+    title: 'Συνδεδεμένοι λογαριασμοί',
+    empty: 'Κανένας πάροχος εδώ δεν υποστηρίζει ακόμη σύνδεση μέσω App Key/Client ID.',
+    authenticatedAt: 'Εξουσιοδοτήθηκε στις {date}',
+    authenticatedAtUnknown: 'Άγνωστη ημερομηνία εξουσιοδότησης',
+    notConnected: 'Δεν είναι συνδεδεμένο',
+    tokenExpiresIn: 'Το token λήγει σε {time}',
+    tokenExpired: 'Το token έληξε — θα ανανεωθεί αυτόματα στην επόμενη ενέργεια',
+    close: 'Κλείσιμο',
+  },
   dropbox: {
     setup: {
       step1: 'Ανοίξτε το Dropbox App Console και κάντε κλικ στο «Create app».',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: η μεταφόρτωση απέτυχε (κατάσταση {status})',
       uploadNetworkError: 'Dropbox: σφάλμα δικτύου κατά τη μεταφόρτωση του αρχείου',
     },
+    sessionNote: 'Η περίοδος σύνδεσης του Dropbox δεν έχει χρονικό όριο: παραμένει έγκυρη μέχρι να αποσυνδεθείτε ή να ανακαλέσετε την πρόσβαση από τις ίδιες τις ρυθμίσεις του Dropbox.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: η μεταφόρτωση απέτυχε (κατάσταση {status})',
       uploadNetworkError: 'Google Drive: σφάλμα δικτύου κατά τη μεταφόρτωση του αρχείου',
     },
+    sessionNote: 'Η περίοδος σύνδεσης του Google Drive ανανεώνεται αυτόματα (περίπου κάθε ώρα), όσο παραμένετε συνδεδεμένοι στον λογαριασμό Google σε αυτό το πρόγραμμα περιήγησης.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: η μεταφόρτωση απέτυχε (κατάσταση {status})',
       uploadNetworkError: 'OneDrive: σφάλμα δικτύου κατά τη μεταφόρτωση του αρχείου',
     },
+    sessionNote: 'Η Microsoft περιορίζει τη σύνδεση για εφαρμογές που εκτελούνται στο πρόγραμμα περιήγησης (SPA) σε 24 ώρες το πολύ — μετά απαιτείται νέα σύνδεση. Αυτός είναι περιορισμός της ίδιας της πλατφόρμας Microsoft, όχι του plugin.',
+  },
+  box: {
+    setup: {
+      step1: 'Ανοίξτε το Box Developer Console και δημιουργήστε μια νέα εφαρμογή με έλεγχο ταυτότητας OAuth 2.0 (User) — όχι Server Authentication (JWT/CCG), που δεν μπορεί να αλλάξει αργότερα.',
+      step2Server: 'Σε αντίθεση με το Dropbox, το Google Drive και το OneDrive, το Box απαιτεί υποχρεωτικά Client Secret για τη σύνδεση, και το ίδιο το Box προειδοποιεί ότι αυτό το μυστικό δεν πρέπει ποτέ να βρίσκεται σε κώδικα του browser — γι’ αυτό ο συγκεκριμένος πάροχος χρειάζεται έναν δικό σας μικρό server που θα το φυλάει (επιλογή tokenEndpoint παρακάτω· ένα έτοιμο παράδειγμα υπάρχει στο README, ενότητα «Box»).',
+      step3: 'Στη σελίδα Configuration της εφαρμογής, αντιγράψτε το Client ID και το Client Secret. Επικολλήστε το Client ID παρακάτω — κρατήστε το Client Secret μόνο στις μεταβλητές περιβάλλοντος του server σας, ποτέ εδώ.',
+      step4WithRedirect: 'Στην ίδια σελίδα Configuration, στο Redirect URIs, επικολλήστε αυτό και κάντε κλικ στο Save:',
+      step4NoRedirect: 'Στην ίδια σελίδα Configuration, στο Redirect URIs, προσθέστε την πλήρη διεύθυνση URL της σελίδας public/box-callback.html στον τομέα σας — δεν ήταν δυνατή η αυτόματη ανίχνευσή της (δείτε το redirectUri στις επιλογές του παρόχου).',
+      step5WithOrigin: 'Ακόμη στη σελίδα Configuration, μεταβείτε στο CORS Domains και προσθέστε αυτό το origin (απαραίτητο ώστε ο browser να καλεί απευθείας το API του Box):',
+      step5NoOrigin: 'Ακόμη στη σελίδα Configuration, μεταβείτε στο CORS Domains και προσθέστε το ακριβές origin (πρωτόκολλο + τομέας + θύρα) από το οποίο σερβίρεται αυτός ο ιστότοπος — δεν ήταν δυνατή η αυτόματη ανίχνευσή του.',
+      step6: 'Στο Application Scopes, ενεργοποιήστε το «Read and write all files and folders stored in Box» (ή Read-only, αν δεν χρειάζεστε μεταφόρτωση/διαγραφή).',
+      step7: 'Επικολλήστε το Client ID στο παρακάτω πεδίο.',
+    },
+    error: {
+      exchangeCode: 'Box: η ανταλλαγή του code για token απέτυχε (κατάσταση {status})',
+      requireClientId: 'Αποθηκεύστε πρώτα ένα Client ID (δείτε τον οδηγό ρύθμισης).',
+      requireRedirectUri:
+        'Δεν ήταν δυνατός ο αυτόματος προσδιορισμός του redirectUri. Ορίστε το ρητά στις επιλογές του BoxProvider (απαραίτητο αν το plugin φορτώνεται μέσω <script type="module"> ή bundler).',
+      requireTokenEndpoint: 'Το BoxProvider απαιτεί την επιλογή tokenEndpoint (έναν δικό σας μικρό server που φυλάει το Client Secret του Box) — δείτε το README, ενότητα «Box».',
+      notConnected: 'Το Box δεν είναι συνδεδεμένο.',
+      sessionExpired: 'Η σύνοδος του Box έληξε, συνδεθείτε ξανά.',
+      refreshFailed: 'Box: η ανανέωση του token απέτυχε (κατάσταση {status})',
+      downloadFailed: 'Box: αποτυχία λήψης του «{name}» (σφάλμα δικτύου/CORS) — δείτε το README, ενότητα «Box»',
+      fileTooLarge:
+        'Το αρχείο ξεπερνά τα {maxMb} MB — τα αρχεία Box ενσωματώνονται ως data URL επειδή δεν υπάρχει proxy λήψης, και αυτό το αρχείο είναι πολύ μεγάλο για κάτι τέτοιο.',
+      uploadFailed: 'Box: η μεταφόρτωση απέτυχε (κατάσταση {status})',
+      uploadNetworkError: 'Box: σφάλμα δικτύου κατά τη μεταφόρτωση του αρχείου',
+    },
+    sessionNote: 'Τα refresh tokens του Box ισχύουν έως 60 ημέρες και αντικαθίστανται με νέο σε κάθε χρήση — αν δεν χρησιμοποιήσετε αυτόν τον ιστότοπο για 60 συνεχόμενες ημέρες, θα χρειαστεί να συνδεθείτε ξανά. Αυτός ο πάροχος εξαρτάται επίσης από έναν δικό σας μικρό server ώστε το Client Secret του Box να μην φτάνει στον browser.',
   },
   s3: {
     connectMenuItem: 'Σύνδεση S3',

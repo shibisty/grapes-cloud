@@ -107,6 +107,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Det gick inte att läsa filen',
     },
   },
+  settings: {
+    tabButton: 'Anslutna konton',
+    title: 'Anslutna konton',
+    empty: 'Ingen leverantör här stöder ännu inloggning med App Key/Client ID.',
+    authenticatedAt: 'Auktoriserad {date}',
+    authenticatedAtUnknown: 'Auktoriseringsdatum okänt',
+    notConnected: 'Inte ansluten',
+    tokenExpiresIn: 'Token upphör om {time}',
+    tokenExpired: 'Token har gått ut — förnyas automatiskt vid nästa åtgärd',
+    close: 'Stäng',
+  },
   dropbox: {
     setup: {
       step1: 'Öppna Dropbox App Console och klicka på "Create app".',
@@ -128,6 +139,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: uppladdningen misslyckades (status {status})',
       uploadNetworkError: 'Dropbox: nätverksfel vid uppladdning av filen',
     },
+    sessionNote: 'Dropbox-sessionen har ingen tidsgräns: den förblir giltig tills du loggar ut eller återkallar åtkomsten i Dropboxs egna inställningar.',
   },
   google: {
     setup: {
@@ -152,6 +164,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: uppladdningen misslyckades (status {status})',
       uploadNetworkError: 'Google Drive: nätverksfel vid uppladdning av filen',
     },
+    sessionNote: 'Google Drive-sessionen förnyas automatiskt (ungefär varje timme) så länge du förblir inloggad på ditt Google-konto i den här webbläsaren.',
   },
   microsoft: {
     setup: {
@@ -182,6 +195,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: uppladdningen misslyckades (status {status})',
       uploadNetworkError: 'OneDrive: nätverksfel vid uppladdning av filen',
     },
+    sessionNote: 'Microsoft begränsar sessionen för appar som körs i webbläsaren (SPA) till högst 24 timmar — därefter måste du logga in igen. Det är en begränsning i själva Microsoft-plattformen, inte i tillägget.',
+  },
+  box: {
+    setup: {
+      step1: 'Raba Box Developer Console ja ráhkat ođđa app OAuth 2.0 (User) autentiserema bokte — ii Server Authentication (JWT/CCG), maid ii sáhte rievdadit maŋŋel.',
+      step2Server: 'Earáláganin go Dropbox, Google Drive ja OneDrive, Box gáibida bearrái Client Secret čatnasit — ja Box ieš várrida ahte dán čiegus ii oaččo leat cuiggodeaddji kodas — danin dát bálvái dárbbaša unna iežas serverama mii dan seailluha (molssaeaktu tokenEndpoint vulos; ovdamearka gávdno README fiillas, oassi "Box").',
+      step3: 'App Configuration siiddus máŋge Client ID ja Client Secret. Bija Client ID vulos — Client Secret seailut dušše iežat servera birasvariábeliin, ii goassege dása.',
+      step4WithRedirect: 'Seamma Configuration siiddus, Redirect URIs vuolde, liibme dán ja coahkkal Save:',
+      step4NoRedirect: 'Seamma Configuration siiddus, Redirect URIs vuolde, lasit ollislaš URL siidui public/box-callback.html iežat domenas — dan ii sáhttán automáhtalaččat gávdnat (geahča redirectUri bálvá molssaeavttuin).',
+      step5WithOrigin: 'Ain Configuration siiddus, jorgal CORS Domains rádjái ja lasit dán origin (dárbbašuvvo vai fierpmádatlogan sáhttá riekta gohčodit Box API):',
+      step5NoOrigin: 'Ain Configuration siiddus, jorgal CORS Domains rádjái ja lasit dárkilis origin (protokolla + domena + poarta) mas dát siidu bálvaluvvo — dan ii sáhttán automáhtalaččat gávdnat.',
+      step6: 'Application Scopes vuolde, ala "Read and write all files and folders stored in Box" (dahje Read-only, jos it dárbbaš uploadet/sihkkut).',
+      step7: 'Bija Client ID vulobealde gieddái.',
+    },
+    error: {
+      exchangeCode: 'Box: ii lihkostuvvan lonuhit code token vuostá (stáhtus {status})',
+      requireClientId: 'Vurke vuos Client ID (geahča ásaheami veahkkeprográmma).',
+      requireRedirectUri:
+        'Ii lihkostuvvan automáhtalaččat gávdnat redirectUri. Cealkke dan čielgasit BoxProvider molssaeavttuin.',
+      requireTokenEndpoint: 'BoxProvider dárbbaša tokenEndpoint molssaeavttu (unna iežas server mii seailluha Box Client Secret) — geahča README, oassi "Box".',
+      notConnected: 'Box ii leat čatnasan.',
+      sessionExpired: 'Box bargobadji nogai, čálit sisa fas.',
+      refreshFailed: 'Box: ii lihkostuvvan ođasmahttit token (stáhtus {status})',
+      downloadFailed: 'Box: ii lihkostuvvan viežžat "{name}" (fierpmádat-/CORS meattáhus) — geahča README, oassi "Box"',
+      fileTooLarge:
+        'Fiila lea stuorát go {maxMb} MB — Box fiillat biddjojuvvojit data URL:n go ii gávdno viežžanproxy, ja dát fiila lea beare stuoris dasa.',
+      uploadFailed: 'Box: uploadeapmi ii lihkostuvvan (stáhtus {status})',
+      uploadNetworkError: 'Box: fierpmádatmeattáhus fiilla uploadeamis',
+    },
+    sessionNote: 'Box ođasmahttinseavvamat leat fámus eanemustá 60 beaivvi ja lonuhuvvojit ođđasin juohke geavaheamis — jos it geavat dán siiddu 60 beaivvi maŋimuš, fertet čálit sisa fas. Dát bálvái maiddái dárbbaša unna iežas servera vai Box Client Secret ii joavdda fierpmádatlogamii.',
   },
   s3: {
     connectMenuItem: 'Anslut S3',

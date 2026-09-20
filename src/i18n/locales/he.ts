@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'קריאת הקובץ נכשלה',
     },
   },
+  settings: {
+    tabButton: 'חשבונות מחוברים',
+    title: 'חשבונות מחוברים',
+    empty: 'אף ספק כאן עדיין לא תומך בהתחברות דרך App Key/Client ID.',
+    authenticatedAt: 'אושר בתאריך {date}',
+    authenticatedAtUnknown: 'תאריך האישור אינו ידוע',
+    notConnected: 'לא מחובר',
+    tokenExpiresIn: 'תוקף האסימון יפוג בעוד {time}',
+    tokenExpired: 'תוקף האסימון פג — הוא יתחדש אוטומטית בפעולה הבאה',
+    close: 'סגירה',
+  },
   dropbox: {
     setup: {
       step1: 'פתחו את Dropbox App Console ולחצו על "Create app".',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: ההעלאה נכשלה (סטטוס {status})',
       uploadNetworkError: 'Dropbox: שגיאת רשת בעת העלאת הקובץ',
     },
+    sessionNote: 'לחיבור ל-Dropbox אין הגבלת זמן: הוא נשאר תקף עד שתתנתקו או תבטלו את הגישה בהגדרות Dropbox עצמן.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: ההעלאה נכשלה (סטטוס {status})',
       uploadNetworkError: 'Google Drive: שגיאת רשת בעת העלאת הקובץ',
     },
+    sessionNote: 'החיבור ל-Google Drive מתחדש אוטומטית (בערך כל שעה) כל עוד אתם מחוברים לחשבון Google בדפדפן זה.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: ההעלאה נכשלה (סטטוס {status})',
       uploadNetworkError: 'OneDrive: שגיאת רשת בעת העלאת הקובץ',
     },
+    sessionNote: 'Microsoft מגבילה את החיבור עבור אפליקציות הפועלות בדפדפן (SPA) ל-24 שעות לכל היותר — לאחר מכן יש להתחבר מחדש. זו מגבלה של פלטפורמת Microsoft עצמה, לא של התוסף.',
+  },
+  box: {
+    setup: {
+      step1: 'פתחו את Box Developer Console וצרו אפליקציה חדשה עם אימות OAuth 2.0 (User) — לא Server Authentication (JWT/CCG), שלא ניתן לשנות מאוחר יותר.',
+      step2Server: 'בשונה מ-Dropbox, Google Drive ו-OneDrive, Box דורש בהכרח Client Secret כדי להתחבר, ו-Box עצמו מזהיר שהסוד הזה אסור שיהיה בקוד הדפדפן — לכן ספק זה זקוק לשרת קטן משלכם שישמור אותו (אפשרות tokenEndpoint למטה; דוגמה מוכנה נמצאת ב-README, בפרק "Box").',
+      step3: 'בעמוד Configuration של האפליקציה העתיקו את Client ID ואת Client Secret. הדביקו את Client ID למטה — את Client Secret שמרו רק במשתני הסביבה של השרת שלכם, לעולם לא כאן.',
+      step4WithRedirect: 'באותו עמוד Configuration, תחת Redirect URIs, הדביקו זאת ולחצו על Save:',
+      step4NoRedirect: 'באותו עמוד Configuration, תחת Redirect URIs, הוסיפו את הכתובת המלאה של הדף public/box-callback.html בדומיין שלכם — לא ניתן היה לזהות אותה אוטומטית (ראו redirectUri באפשרויות הספק).',
+      step5WithOrigin: 'עדיין בעמוד Configuration, גללו עד ל-CORS Domains והוסיפו את ה-origin הזה (נדרש כדי שהדפדפן יוכל לפנות ל-API של Box ישירות):',
+      step5NoOrigin: 'עדיין בעמוד Configuration, גללו עד ל-CORS Domains והוסיפו את ה-origin המדויק (פרוטוקול + דומיין + פורט) שממנו מוגש האתר — לא ניתן היה לזהות אותו אוטומטית.',
+      step6: 'תחת Application Scopes הפעילו את "Read and write all files and folders stored in Box" (או Read-only, אם אינכם זקוקים להעלאה/מחיקה).',
+      step7: 'הדביקו את Client ID בשדה שלמטה.',
+    },
+    error: {
+      exchangeCode: 'Box: החלפת ה-code בטוקן נכשלה (סטטוס {status})',
+      requireClientId: 'שמרו קודם Client ID (ראו את אשף ההגדרה).',
+      requireRedirectUri:
+        'לא ניתן היה לקבוע את redirectUri אוטומטית. ציינו אותו במפורש באפשרויות BoxProvider (נדרש אם התוסף נטען דרך <script type="module"> או bundler).',
+      requireTokenEndpoint: 'BoxProvider דורש את האפשרות tokenEndpoint (שרת קטן משלכם ששומר את ה-Client Secret של Box) — ראו README, פרק "Box".',
+      notConnected: 'Box אינו מחובר.',
+      sessionExpired: 'הפעלת Box פגה, יש להתחבר שוב.',
+      refreshFailed: 'Box: רענון הטוקן נכשל (סטטוס {status})',
+      downloadFailed: 'Box: הורדת "{name}" נכשלה (שגיאת רשת/CORS) — ראו README, פרק "Box"',
+      fileTooLarge:
+        'הקובץ גדול מ-{maxMb} MB — קובצי Box מוטמעים כ-data URL מכיוון שאין שרת proxy להורדה, והקובץ הזה גדול מדי בשביל זה.',
+      uploadFailed: 'Box: ההעלאה נכשלה (סטטוס {status})',
+      uploadNetworkError: 'Box: שגיאת רשת בעת העלאת הקובץ',
+    },
+    sessionNote: 'טוקני הרענון של Box תקפים למקסימום 60 יום ומוחלפים בטוקן חדש בכל שימוש — אם לא תשתמשו באתר הזה 60 יום ברציפות תצטרכו להתחבר מחדש. ספק זה תלוי גם בשרת קטן משלכם כדי ש-Client Secret של Box לא יגיע לדפדפן.',
   },
   s3: {
     connectMenuItem: 'חיבור S3',

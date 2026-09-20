@@ -2,6 +2,7 @@ import type {
   AuthState,
   ListOptions,
   ListResult,
+  ProviderSessionInfo,
   ProviderSetupInfo,
   ResolvedAsset,
   StorageItem,
@@ -46,6 +47,21 @@ interface StoredTokens {
   accessToken: string;
   refreshToken?: string;
   expiresAt: number; // epoch ms
+  /**
+   * epoch ms — когда пользователь ПЕРВЫЙ РАЗ прошёл `authenticate()`
+   * (полный интерактивный вход, не тихое обновление по
+   * refresh_token в `ensureAccessToken()`). Только для отображения в
+   * "Подключённые аккаунты" (см. `getSessionInfo()`) — само по себе
+   * ни на что не влияет, и уж точно не продлевает и не ограничивает
+   * настоящий 24-часовой потолок refresh-токена, который выставляет
+   * Microsoft для SPA-приложений (см. `sessionNote` в i18n и
+   * `learn.microsoft.com/entra/identity-platform/refresh-tokens`) —
+   * это ограничение никак не обойти на стороне клиента, потолок
+   * отсчитывается Microsoft от момента выдачи ПЕРВОГО refresh-токена,
+   * а не от этого поля. `undefined` у токенов, сохранённых до
+   * появления этого поля (более старая версия плагина).
+   */
+  authenticatedAt?: number;
 }
 
 interface GraphThumbnailSet {
@@ -276,6 +292,7 @@ export class OneDriveProvider implements StorageProvider {
       accessToken: json.access_token,
       refreshToken: json.refresh_token,
       expiresAt: Date.now() + json.expires_in * 1000,
+      authenticatedAt: Date.now(),
     };
     this.writeTokens(this.tokens);
 
@@ -285,6 +302,16 @@ export class OneDriveProvider implements StorageProvider {
   disconnect(): void {
     this.tokens = null;
     localStorage.removeItem(this.storageKey);
+  }
+
+  /** См. `ProviderSessionInfo` — данные для вкладки "Подключённые аккаунты" (AssetBrowser.openSettingsModal). Чисто информационные, ничем не управляют. */
+  getSessionInfo(): ProviderSessionInfo {
+    return {
+      authenticatedAt: this.tokens?.authenticatedAt,
+      expiresAt: this.tokens?.expiresAt,
+      credential: this.clientId ?? undefined,
+      sessionNoteKey: 'microsoft.sessionNote',
+    };
   }
 
   private requireClientId(): string {
@@ -352,6 +379,8 @@ export class OneDriveProvider implements StorageProvider {
       // Microsoft может (но не обязан) вернуть новый refresh_token при обновлении — если не вернул, оставляем старый.
       refreshToken: json.refresh_token ?? this.tokens.refreshToken,
       expiresAt: Date.now() + json.expires_in * 1000,
+      // Тихое обновление, не новый вход — дата первого входа не меняется.
+      authenticatedAt: this.tokens.authenticatedAt,
     };
     this.writeTokens(this.tokens);
     return this.tokens.accessToken;

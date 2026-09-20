@@ -2,6 +2,7 @@ import type {
   AuthState,
   ListOptions,
   ListResult,
+  ProviderSessionInfo,
   ProviderSetupInfo,
   ResolvedAsset,
   StorageItem,
@@ -48,6 +49,14 @@ export interface GoogleDriveProviderOptions {
 interface StoredToken {
   accessToken: string;
   expiresAt: number; // epoch ms
+  /**
+   * epoch ms — когда пользователь ПЕРВЫЙ РАЗ явно вошёл (не silent-
+   * переспрос через `requestToken(true)` в `ensureAccessToken()`).
+   * Только для отображения в "Подключённые аккаунты" (см.
+   * `getSessionInfo()`) — `undefined` у токенов, сохранённых до
+   * появления этого поля.
+   */
+  authenticatedAt?: number;
 }
 
 interface DriveFile {
@@ -295,6 +304,10 @@ export class GoogleDriveProvider implements StorageProvider {
             this.token = {
               accessToken: response.access_token,
               expiresAt: Date.now() + (response.expires_in ?? 3600) * 1000,
+              // silent (ensureAccessToken()) — переносим дату первого
+              // явного входа как есть; не-silent (authenticate()) —
+              // это он и есть, фиксируем заново.
+              authenticatedAt: silent ? this.token?.authenticatedAt : Date.now(),
             };
             this.writeToken(this.token);
             resolve(response.access_token);
@@ -314,6 +327,16 @@ export class GoogleDriveProvider implements StorageProvider {
     if (this.token && this.token.expiresAt > Date.now() + 60 * 1000) return this.token.accessToken;
     // Токена нет или истёк — пробуем тихо переполучить (без всплывающего окна), не роняя список файлов на пустом месте.
     return this.requestToken(true);
+  }
+
+  /** См. `ProviderSessionInfo` — данные для вкладки "Подключённые аккаунты" (AssetBrowser.openSettingsModal). Чисто информационные, ничем не управляют. */
+  getSessionInfo(): ProviderSessionInfo {
+    return {
+      authenticatedAt: this.token?.authenticatedAt,
+      expiresAt: this.token?.expiresAt,
+      credential: this.clientId ?? undefined,
+      sessionNoteKey: 'google.sessionNote',
+    };
   }
 
   private readToken(): StoredToken | null {

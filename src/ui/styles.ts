@@ -100,7 +100,8 @@ export const STYLES = `
 [dir="rtl"] .gca-tab__remove { right: auto; left: 3px; }
 .gca-tab-wrap:hover .gca-tab__remove, .gca-tab__remove:focus-visible { opacity: 1; }
 .gca-tab__remove:hover { background: #ff6b6b; }
-.gca-tab__remove--confirm { opacity: 1; background: #ff6b6b; }
+/* Должно ЗАМЕТНО отличаться от простого :hover выше — курсор и так стоит на кнопке в момент первого клика, так что если цвет совпадает с hover, "вооружённое" состояние (ждём второй клик-подтверждение) визуально неотличимо от обычного наведения, и человек не понимает, что клик вообще что-то изменил (см. комментарий у removeBtn в AssetBrowser.ts). Поэтому — другой, более тёмный/насыщенный цвет плюс edge-обводка и лёгкое увеличение, а не просто тот же оттенок. */
+.gca-tab__remove--confirm { opacity: 1; background: #c0392b; box-shadow: 0 0 0 2px rgba(192,57,43,.35); transform: scale(1.12); font-weight: 700; }
 /* Кнопка "+" (подключить ещё одно хранилище) и шеврон "ещё вкладки" — оба конца ряда вкладок, всегда видимые (не участвуют в переносе/скрытии). */
 .gca-tab-add, .gca-tab-overflow { position: relative; display: inline-flex; align-items: center; flex-shrink: 0; }
 /*
@@ -141,6 +142,28 @@ export const STYLES = `
 .gca-connect-modal__hint { font-size: 11px; opacity: .7; line-height: 1.45; margin: 0; }
 .gca-connect-modal__error { color: #ff6b6b; font-size: 12px; margin: 0; }
 .gca-connect-modal__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+/*
+ * "Подключённые аккаунты" (шестерёнка рядом с "+" в ряду вкладок) —
+ * та же .gca-connect-modal-backdrop/.gca-connect-modal "мини-модалка
+ * внутри .gca-root", что и попап "Подключить S3" выше, только шире
+ * (список строк, а не форма из узких полей) и без сабмита формы.
+ */
+.gca-settings-modal { max-width: 480px; }
+.gca-settings-modal__list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow-y: auto; }
+.gca-settings-modal__empty { margin: 0; opacity: .75; font-size: 13px; }
+.gca-settings-modal__row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.03); }
+.gca-settings-modal__row-head { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.gca-settings-modal__row-head svg { width: 18px; height: 18px; }
+.gca-settings-modal__row-label { font-weight: 600; white-space: nowrap; }
+.gca-settings-modal__row-info { flex: 1 1 auto; min-width: 0; }
+.gca-settings-modal__row-info p { margin: 0 0 4px; font-size: 12px; opacity: .85; word-break: break-word; }
+.gca-settings-modal__row-info p:last-child { margin-bottom: 0; }
+.gca-settings-modal__row-status { font-weight: 600; opacity: 1 !important; }
+/* Заметка про поведение сессии (например, 24-часовой потолок у OneDrive) — не ошибка, поэтому не красная, но заметнее обычной строки info. */
+.gca-settings-modal__row-note { font-style: italic; }
+.gca-settings-modal__row-actions { flex-shrink: 0; }
+/* Тот же паттерн двухшагового подтверждения, что и у .gca-settings__item--confirm/.gca-tab__remove--confirm — второй клик подтверждает, без window.confirm(). */
+.gca-btn--confirm { color: #ff6b6b; border-color: #ff6b6b; }
 .gca-body { flex: 1; overflow-y: auto; padding: 10px; }
 .gca-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
 .gca-toolbar__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
@@ -416,6 +439,9 @@ export const STYLES = `
   .gca-tree__toolbar-btn { flex: 1; justify-content: center; }
   .gca-tree-node__toggle, .gca-tree-node__name { min-height: 32px; }
   .gca-upload-queue { margin: 0 6px 6px; max-height: 160px; }
+  /* Строка провайдера в "Подключённые аккаунты" — на узком экране в один ряд с кнопкой Войти/Выйти не влезает вместе с текстом даты/токена. */
+  .gca-settings-modal__row { flex-direction: column; align-items: stretch; }
+  .gca-settings-modal__row-actions .gca-btn { width: 100%; }
 }
 `;
 

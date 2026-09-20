@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Kunne ikke lese filen',
     },
   },
+  settings: {
+    tabButton: 'Tilkoblede kontoer',
+    title: 'Tilkoblede kontoer',
+    empty: 'Ingen leverandør her støtter ennå innlogging med App Key/Client ID.',
+    authenticatedAt: 'Autorisert {date}',
+    authenticatedAtUnknown: 'Autorisasjonsdato ukjent',
+    notConnected: 'Ikke tilkoblet',
+    tokenExpiresIn: 'Token utløper om {time}',
+    tokenExpired: 'Token er utløpt — fornyes automatisk ved neste handling',
+    close: 'Lukk',
+  },
   dropbox: {
     setup: {
       step1: 'Åpne Dropbox App Console og klikk «Create app».',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: opplasting mislyktes (status {status})',
       uploadNetworkError: 'Dropbox: nettverksfeil under opplasting av filen',
     },
+    sessionNote: 'Dropbox-økten har ingen tidsbegrensning: den forblir gyldig til du logger ut eller trekker tilbake tilgangen i selve Dropbox-innstillingene.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: opplasting mislyktes (status {status})',
       uploadNetworkError: 'Google Drive: nettverksfeil under opplasting av filen',
     },
+    sessionNote: 'Google Drive-økten fornyes automatisk (omtrent hver time) så lenge du forblir innlogget på Google-kontoen din i denne nettleseren.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: opplasting mislyktes (status {status})',
       uploadNetworkError: 'OneDrive: nettverksfeil under opplasting av filen',
     },
+    sessionNote: 'Microsoft begrenser økten for apper som kjører i nettleseren (SPA) til maksimalt 24 timer — deretter må du logge inn på nytt. Dette er en begrensning fra selve Microsoft-plattformen, ikke fra utvidelsen.',
+  },
+  box: {
+    setup: {
+      step1: 'Åpne Box Developer Console og opprett en ny app med OAuth 2.0-(User-)autentisering — ikke Server Authentication (JWT/CCG), som ikke kan endres senere.',
+      step2Server: 'I motsetning til Dropbox, Google Drive og OneDrive krever Box en Client Secret for å logge inn, og Box selv advarer om at denne hemmeligheten aldri må ligge i nettleserkode — derfor trenger denne leverandøren en liten egen server som oppbevarer den (alternativet tokenEndpoint nedenfor; et ferdig eksempel finnes i README, avsnittet «Box»).',
+      step3: 'På appens Configuration-side kopierer du Client ID og Client Secret. Lim inn Client ID nedenfor — oppbevar Client Secret bare i miljøvariablene til serveren din, aldri her.',
+      step4WithRedirect: 'På samme Configuration-side, under Redirect URIs, lim inn dette og klikk Save:',
+      step4NoRedirect: 'På samme Configuration-side, under Redirect URIs, legg til hele URL-en til siden public/box-callback.html på domenet ditt — den kunne ikke oppdages automatisk (se redirectUri i leverandøralternativene).',
+      step5WithOrigin: 'Fortsatt på Configuration-siden, bla ned til CORS Domains og legg til denne origin (nødvendig for at nettleseren skal kunne kalle Box-API-et direkte):',
+      step5NoOrigin: 'Fortsatt på Configuration-siden, bla ned til CORS Domains og legg til den nøyaktige origin (protokoll + domene + port) dette nettstedet leveres fra — den kunne ikke oppdages automatisk.',
+      step6: 'Under Application Scopes, aktiver «Read and write all files and folders stored in Box» (eller Read-only, hvis du ikke trenger opplasting/sletting).',
+      step7: 'Lim inn Client ID i feltet nedenfor.',
+    },
+    error: {
+      exchangeCode: 'Box: klarte ikke å bytte code mot et token (status {status})',
+      requireClientId: 'Lagre en Client ID først (se oppsettsveiviseren).',
+      requireRedirectUri:
+        'Klarte ikke å fastslå redirectUri automatisk. Angi den eksplisitt i BoxProvider-alternativene (nødvendig hvis pluginet lastes via <script type="module"> eller en bundler).',
+      requireTokenEndpoint: 'BoxProvider krever alternativet tokenEndpoint (en liten egen server som oppbevarer Box Client Secret) — se README, avsnittet «Box».',
+      notConnected: 'Box er ikke koblet til.',
+      sessionExpired: 'Box-økten er utløpt, logg inn på nytt.',
+      refreshFailed: 'Box: klarte ikke å fornye token (status {status})',
+      downloadFailed: 'Box: kunne ikke laste ned «{name}» (nettverks-/CORS-feil) — se README, avsnittet «Box»',
+      fileTooLarge:
+        'Filen er større enn {maxMb} MB — Box-filer settes inn som data-URL siden det ikke finnes noen nedlastingsproxy, og denne filen er for stor til det.',
+      uploadFailed: 'Box: opplasting mislyktes (status {status})',
+      uploadNetworkError: 'Box: nettverksfeil under opplasting av filen',
+    },
+    sessionNote: 'Box-oppdateringstoken er gyldige i maks 60 dager og erstattes med et nytt for hver bruk — bruker du ikke dette nettstedet på 60 sammenhengende dager, må du logge inn på nytt. Denne leverandøren er også avhengig av en liten egen server for å holde Box Client Secret utenfor nettleseren.',
   },
   s3: {
     connectMenuItem: 'Koble til S3',

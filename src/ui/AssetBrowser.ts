@@ -191,12 +191,19 @@ export class AssetBrowser {
   private insertErrorEl: HTMLElement | null = null;
   private uploadQueueItems: UploadQueueItem[] = [];
   private connectModalEl: HTMLElement | null = null;
+  /** Модалка "Подключённые аккаунты" (шестерёнка в ряду вкладок рядом с "+", см. `openSettingsModal`) — не путать с `connectModalEl` (попап "Подключить S3"). */
+  private settingsModalEl: HTMLElement | null = null;
+  /** Тикает раз в минуту, пока открыта settingsModalEl, чтобы обратный отсчёт токена не "замирал" — см. `openSettingsModal`. */
+  private settingsModalInterval: ReturnType<typeof setInterval> | null = null;
   private readonly onLocaleChange = () => this.renderShell();
   private readonly onEscapeCloseMenu = (e: KeyboardEvent) => {
     if (e.key === 'Escape') this.closeContextMenu();
   };
   private readonly onEscapeCloseConnectModal = (e: KeyboardEvent) => {
     if (e.key === 'Escape') this.closeConnectModal();
+  };
+  private readonly onEscapeCloseSettingsModal = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') this.closeSettingsModal();
   };
   /**
    * Пересчитывает, какие вкладки помещаются по ширине, при изменении
@@ -248,6 +255,7 @@ export class AssetBrowser {
     if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
     this.closeContextMenu();
     this.closeConnectModal();
+    this.closeSettingsModal();
     this.root.innerHTML = '';
     this.root.classList.remove('gca-root');
   }
@@ -475,6 +483,224 @@ export class AssetBrowser {
   }
 
   // ------------------------------------------------------------------
+  // "Подключённые аккаунты" (шестерёнка рядом с "+", см.
+  // renderGlobalSettingsButton) — ЧИСТО информационная модалка: по
+  // одной строке на каждый OAuth-провайдер (дата первого входа,
+  // App Key/Client ID, обратный отсчёт до истечения ТЕКУЩЕГО
+  // access-токена, короткая заметка о том, как вообще ведёт себя
+  // сессия у этого провайдера) плюс кнопка Войти/Выйти. Специально
+  // БЕЗ единой настройки, которая навязывала бы что-то поверх
+  // настоящего OAuth-механизма — см. `ProviderSessionInfo` в
+  // `types.ts` и историю проекта (пользователь явно отклонил
+  // клиентский принудительный сброс сессии: "либо авто от токена,
+  // либо логаут от клиента, сами ничего не делаем").
+  // ------------------------------------------------------------------
+
+  /**
+   * Локализованная длительность вроде "42 минуты"/"3 часа" — через
+   * `Intl.NumberFormat` со `style: 'unit'` (широко поддерживается, но
+   * не абсолютно везде — например, старые движки без ICU); при сбое
+   * просто возвращает нелокализованные "N min"/"N h", как и
+   * `formatSize()` для единиц KB/MB (см. её комментарий) — это лучше,
+   * чем уронить всю модалку на редком браузере.
+   */
+  private formatDuration(ms: number): string {
+    const totalMinutes = Math.max(1, Math.round(ms / 60000));
+    const locale = this.editor.I18n.getLocale();
+    try {
+      if (totalMinutes < 60) {
+        return new Intl.NumberFormat(locale, { style: 'unit', unit: 'minute', unitDisplay: 'long' }).format(totalMinutes);
+      }
+      const hours = Math.round(totalMinutes / 60);
+      return new Intl.NumberFormat(locale, { style: 'unit', unit: 'hour', unitDisplay: 'long' }).format(hours);
+    } catch {
+      return totalMinutes < 60 ? `${totalMinutes} min` : `${Math.round(totalMinutes / 60)} h`;
+    }
+  }
+
+  /** Провайдеры, которые вообще имеет смысл показывать в "Подключённые аккаунты" — с App Key/Client ID, уже сохранённым через мастер настройки (иначе там нечего показывать, кроме как "не настроено", а это уже экран самой вкладки). */
+  private settingsModalProviders(): StorageProvider[] {
+    return this.allProviders.filter((p) => p.setCredential && p.getAuthState().configured);
+  }
+
+  private openSettingsModal(): void {
+    this.closeConnectModal();
+    this.closeSettingsModal();
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'gca-connect-modal-backdrop';
+    backdrop.addEventListener('click', (event) => {
+      if (event.target === backdrop) this.closeSettingsModal();
+    });
+
+    const modal = document.createElement('div');
+    modal.className = 'gca-connect-modal gca-settings-modal';
+    backdrop.appendChild(modal);
+
+    const title = document.createElement('h3');
+    title.className = 'gca-connect-modal__title';
+    title.textContent = t(this.editor, 'settings.title');
+    modal.appendChild(title);
+
+    const list = document.createElement('div');
+    list.className = 'gca-settings-modal__list';
+    modal.appendChild(list);
+
+    const renderRows = () => {
+      list.innerHTML = '';
+      const providers = this.settingsModalProviders();
+
+      if (!providers.length) {
+        const empty = document.createElement('p');
+        empty.className = 'gca-settings-modal__empty';
+        empty.textContent = t(this.editor, 'settings.empty');
+        list.appendChild(empty);
+        return;
+      }
+
+      for (const provider of providers) {
+        list.appendChild(renderRow(provider));
+      }
+    };
+
+    const renderRow = (provider: StorageProvider): HTMLElement => {
+      const row = document.createElement('div');
+      row.className = 'gca-settings-modal__row';
+
+      const head = document.createElement('div');
+      head.className = 'gca-settings-modal__row-head';
+      head.innerHTML = `<span class="gca-tab__icon">${provider.icon}</span><span class="gca-settings-modal__row-label">${escapeHtml(provider.label)}</span>`;
+      row.appendChild(head);
+
+      const info = document.createElement('div');
+      info.className = 'gca-settings-modal__row-info';
+
+      const session = provider.getSessionInfo?.();
+      if (session?.credential) {
+        const credentialLabelKey = provider.getSetupInfo?.()?.credentialLabelKey ?? 'setup.appKeyPlaceholder';
+        const credentialLine = document.createElement('p');
+        credentialLine.textContent = `${t(this.editor, credentialLabelKey)}: ${session.credential}`;
+        info.appendChild(credentialLine);
+      }
+
+      const dateLine = document.createElement('p');
+      dateLine.textContent = session?.authenticatedAt
+        ? t(this.editor, 'settings.authenticatedAt', { date: this.formatDate(new Date(session.authenticatedAt).toISOString()) })
+        : t(this.editor, 'settings.authenticatedAtUnknown');
+      info.appendChild(dateLine);
+
+      const auth = provider.getAuthState();
+      const statusLine = document.createElement('p');
+      statusLine.className = 'gca-settings-modal__row-status';
+      if (auth.authenticated && session?.expiresAt) {
+        const remaining = session.expiresAt - Date.now();
+        statusLine.textContent =
+          remaining > 0
+            ? t(this.editor, 'settings.tokenExpiresIn', { time: this.formatDuration(remaining) })
+            : t(this.editor, 'settings.tokenExpired');
+      } else if (!auth.authenticated) {
+        statusLine.textContent = t(this.editor, 'settings.notConnected');
+      }
+      if (statusLine.textContent) info.appendChild(statusLine);
+
+      if (session?.sessionNoteKey) {
+        const note = document.createElement('p');
+        note.className = 'gca-settings-modal__row-note';
+        note.textContent = t(this.editor, session.sessionNoteKey);
+        info.appendChild(note);
+      }
+
+      row.appendChild(info);
+
+      const actions = document.createElement('div');
+      actions.className = 'gca-settings-modal__row-actions';
+
+      if (auth.authenticated) {
+        const logoutBtn = document.createElement('button');
+        logoutBtn.type = 'button';
+        logoutBtn.className = 'gca-btn';
+        logoutBtn.textContent = t(this.editor, 'auth.logout');
+        let confirmTimer: ReturnType<typeof setTimeout> | null = null;
+        logoutBtn.addEventListener('click', () => {
+          if (logoutBtn.classList.contains('gca-btn--confirm')) {
+            if (confirmTimer) clearTimeout(confirmTimer);
+            void this.handleLogout(provider).then(renderRows);
+            return;
+          }
+          logoutBtn.classList.add('gca-btn--confirm');
+          logoutBtn.textContent = t(this.editor, 'auth.logoutConfirm');
+          confirmTimer = setTimeout(() => {
+            logoutBtn.classList.remove('gca-btn--confirm');
+            logoutBtn.textContent = t(this.editor, 'auth.logout');
+          }, 4000);
+        });
+        actions.appendChild(logoutBtn);
+      } else {
+        const loginBtn = document.createElement('button');
+        loginBtn.type = 'button';
+        loginBtn.className = 'gca-btn gca-btn--primary';
+        loginBtn.textContent = t(this.editor, 'auth.loginButton', { provider: provider.label });
+        loginBtn.addEventListener('click', () => {
+          loginBtn.disabled = true;
+          loginBtn.textContent = t(this.editor, 'auth.loggingIn');
+          void provider
+            .authenticate()
+            .then(() => {
+              // Активной вкладке тоже нужно узнать, что теперь есть
+              // доступ — иначе она осталась бы на экране "Войти" до
+              // следующего клика по вкладке.
+              if (this.activeProviderId === provider.id) {
+                this.renderBody();
+                void this.loadActiveProvider();
+              }
+              renderRows();
+            })
+            .catch((error: unknown) => {
+              this.props.onError?.(error, provider.id);
+              loginBtn.disabled = false;
+              loginBtn.textContent = t(this.editor, 'auth.loginButton', { provider: provider.label });
+            });
+        });
+        actions.appendChild(loginBtn);
+      }
+
+      row.appendChild(actions);
+      return row;
+    };
+
+    renderRows();
+    // Обратный отсчёт токена не должен "замирать", пока модалка
+    // открыта — перерисовываем раз в минуту (не чаще: секунды тут не
+    // нужны, счётчик округляется до минут/часов, см. formatDuration()).
+    this.settingsModalInterval = setInterval(renderRows, 60_000);
+
+    const actionsRow = document.createElement('div');
+    actionsRow.className = 'gca-connect-modal__actions';
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'gca-btn';
+    closeBtn.textContent = t(this.editor, 'settings.close');
+    closeBtn.addEventListener('click', () => this.closeSettingsModal());
+    actionsRow.appendChild(closeBtn);
+    modal.appendChild(actionsRow);
+
+    this.root.appendChild(backdrop);
+    this.settingsModalEl = backdrop;
+    document.addEventListener('keydown', this.onEscapeCloseSettingsModal);
+  }
+
+  private closeSettingsModal(): void {
+    if (this.settingsModalInterval) {
+      clearInterval(this.settingsModalInterval);
+      this.settingsModalInterval = null;
+    }
+    if (!this.settingsModalEl) return;
+    this.settingsModalEl.remove();
+    this.settingsModalEl = null;
+    document.removeEventListener('keydown', this.onEscapeCloseSettingsModal);
+  }
+
+  // ------------------------------------------------------------------
   // Рендер
   // ------------------------------------------------------------------
 
@@ -672,6 +898,18 @@ export class AssetBrowser {
       // убрать отсюда нельзя (их и подключил не посетитель). Двухшаговое
       // подтверждение — тот же паттерн, что у "Выйти" в renderSettingsMenu,
       // без window.confirm().
+      //
+      // Баг из практики: раньше "вооружённое" состояние (после первого
+      // клика, ждём второй клик-подтверждение) было видно ТОЛЬКО в
+      // title/aria-label — а `.gca-tab__remove--confirm` в styles.ts был
+      // того же цвета, что и обычный `:hover`. Поскольку курсор мыши и
+      // так стоит на кнопке в момент клика, оба состояния выглядели
+      // ВИЗУАЛЬНО ИДЕНТИЧНО — первый клик казался вообще ничего не
+      // сделавшим (кнопка так и осталась "×" того же цвета), и человек
+      // не знал, что нужно кликнуть ещё раз в течение 4 секунд. Теперь
+      // "вооружённое" состояние ещё и меняет сам символ на "?" (второй
+      // символ текста `removeConnectionConfirm`, "Remove?"/"Точно
+      // удалить?") — это видно без наведения и без чтения tooltip'а.
       if (removable) {
         const removeBtn = document.createElement('button');
         removeBtn.type = 'button';
@@ -689,10 +927,12 @@ export class AssetBrowser {
             return;
           }
           removeBtn.classList.add('gca-tab__remove--confirm');
+          removeBtn.textContent = '?';
           removeBtn.title = t(this.editor, 'common.removeConnectionConfirm');
           removeBtn.setAttribute('aria-label', t(this.editor, 'common.removeConnectionConfirm'));
           confirmTimer = setTimeout(() => {
             removeBtn.classList.remove('gca-tab__remove--confirm');
+            removeBtn.textContent = '×';
             removeBtn.title = removeLabel;
             removeBtn.setAttribute('aria-label', removeLabel);
           }, 4000);
@@ -705,6 +945,14 @@ export class AssetBrowser {
 
     tabs.appendChild(this.renderTabOverflowButton());
     tabs.appendChild(this.renderAddConnectionButton());
+    // Шестерёнка "Подключённые аккаунты" — по просьбе пользователя
+    // именно рядом с "+" (см. историю проекта), а не только внутри
+    // тулбара конкретной вкладки (там уже есть своя шестерёнка с
+    // одним пунктом "Выйти" — renderSettingsMenu). Эта — общая на все
+    // вкладки сразу, показывает все OAuth-подключения разом.
+    if (this.allProviders.some((p) => p.setCredential)) {
+      tabs.appendChild(this.renderGlobalSettingsButton());
+    }
 
     const body = document.createElement('div');
     body.className = 'gca-body';
@@ -820,6 +1068,34 @@ export class AssetBrowser {
   }
 
   /**
+   * Шестерёнка "Подключённые аккаунты" — по просьбе пользователя
+   * рядом с "+" в ряду вкладок (см. историю проекта), одна на все
+   * OAuth-провайдеры сразу (Dropbox/Google Drive/OneDrive — у кого
+   * есть `setCredential`), открывает `openSettingsModal()`. НЕ путать
+   * с `renderSettingsMenu()` — той шестерёнкой внутри тулбара ОДНОЙ
+   * конкретной вкладки, где сейчас только пункт "Выйти".
+   */
+  private renderGlobalSettingsButton(): HTMLElement {
+    const wrap = document.createElement('div');
+    wrap.className = 'gca-settings-tab-btn';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'gca-tab-icon-btn';
+    const label = t(this.editor, 'settings.tabButton');
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+    btn.innerHTML = SETTINGS_ICON;
+    btn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.openSettingsModal();
+    });
+
+    wrap.appendChild(btn);
+    return wrap;
+  }
+
+  /**
    * Шеврон "ещё вкладки" — скрыт по умолчанию (`hidden`), содержимое
    * и видимость выставляет `updateTabsOverflow()` уже после того, как
    * все вкладки реально в DOM и можно измерить, влезли ли они. Сама
@@ -890,6 +1166,12 @@ export class AssetBrowser {
     const overflowWrap = tabsEl.querySelector<HTMLElement>('.gca-tab-overflow');
     const overflowMenu = overflowWrap?.querySelector<HTMLElement>('.gca-tab-overflow__menu');
     const addWrap = tabsEl.querySelector<HTMLElement>('.gca-tab-add');
+    // Шестерёнка "Подключённые аккаунты" — необязательный сосед "+"
+    // (см. renderShell), рисуется только если хоть один провайдер её
+    // требует. Её ширину тоже нужно резервировать наравне с "+",
+    // иначе на узком экране последняя видимая вкладка перекрывала бы
+    // её вместо ухода в шеврон "ещё вкладки".
+    const settingsWrap = tabsEl.querySelector<HTMLElement>('.gca-settings-tab-btn');
     if (!overflowWrap || !overflowMenu || !addWrap) return;
 
     wraps.forEach((w) => (w.style.display = ''));
@@ -899,7 +1181,7 @@ export class AssetBrowser {
     const containerWidth = tabsEl.clientWidth;
     if (containerWidth <= 0) return;
 
-    const addWidth = addWrap.offsetWidth + 4; // + gap ряда
+    const addWidth = addWrap.offsetWidth + 4 + (settingsWrap ? settingsWrap.offsetWidth + 4 : 0); // + gap ряда
     const widths = wraps.map((w) => w.offsetWidth + 4);
     const totalWidth = widths.reduce((a, b) => a + b, 0);
 

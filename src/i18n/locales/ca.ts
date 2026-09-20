@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'No s’ha pogut llegir el fitxer',
     },
   },
+  settings: {
+    tabButton: 'Comptes connectats',
+    title: 'Comptes connectats',
+    empty: 'Cap proveïdor admet encara l’inici de sessió amb App Key/Client ID.',
+    authenticatedAt: 'Autoritzat el {date}',
+    authenticatedAtUnknown: 'Data d’autorització desconeguda',
+    notConnected: 'No connectat',
+    tokenExpiresIn: 'El testimoni caduca en {time}',
+    tokenExpired: 'El testimoni ha caducat: es renovarà automàticament en la propera acció',
+    close: 'Tanca',
+  },
   dropbox: {
     setup: {
       step1: 'Obre la Dropbox App Console i fes clic a «Create app».',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: la pujada ha fallat (estat {status})',
       uploadNetworkError: 'Dropbox: error de xarxa en pujar el fitxer',
     },
+    sessionNote: 'La sessió de Dropbox no té límit de temps: es manté activa fins que tanquis la sessió o revoquis l’accés a la configuració de Dropbox.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: la pujada ha fallat (estat {status})',
       uploadNetworkError: 'Google Drive: error de xarxa en pujar el fitxer',
     },
+    sessionNote: 'La sessió de Google Drive es renova automàticament (aproximadament cada hora) mentre segueixis connectat al teu compte de Google en aquest navegador.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: la pujada ha fallat (estat {status})',
       uploadNetworkError: 'OneDrive: error de xarxa en pujar el fitxer',
     },
+    sessionNote: 'Microsoft limita a 24 hores la sessió de les aplicacions que s’executen al navegador (SPA); passat aquest temps caldrà tornar a iniciar sessió — és una limitació de la mateixa plataforma Microsoft, no del connector.',
+  },
+  box: {
+    setup: {
+      step1: 'Obre la Box Developer Console i crea una nova app amb autenticació OAuth 2.0 (User) — no Server Authentication (JWT/CCG), que no es pot canviar després.',
+      step2Server: 'A diferència de Dropbox, Google Drive i OneDrive, Box exigeix un Client Secret per iniciar sessió, i el mateix Box adverteix que aquest secret mai ha d’estar en codi del navegador — per això aquest proveïdor necessita un petit servidor propi que el guardi (opció tokenEndpoint més avall; hi ha un exemple llest per usar al README, secció «Box»).',
+      step3: 'A la pàgina Configuration de l’app, copia el Client ID i el Client Secret. Enganxa el Client ID a sota — guarda el Client Secret només a les variables d’entorn del teu servidor, mai aquí.',
+      step4WithRedirect: 'A la mateixa pàgina Configuration, a Redirect URIs, enganxa això i fes clic a Save:',
+      step4NoRedirect: 'A la mateixa pàgina Configuration, a Redirect URIs, afegeix l’URL completa de la pàgina public/box-callback.html al teu domini — no s’ha pogut detectar automàticament (consulta redirectUri a les opcions del proveïdor).',
+      step5WithOrigin: 'Encara a la pàgina Configuration, desplaça’t fins a CORS Domains i afegeix aquest origin (necessari perquè el navegador pugui cridar l’API de Box directament):',
+      step5NoOrigin: 'Encara a la pàgina Configuration, desplaça’t fins a CORS Domains i afegeix l’origin exacte (protocol + domini + port) des del qual es serveix aquest lloc — no s’ha pogut detectar automàticament.',
+      step6: 'A Application Scopes, activa «Read and write all files and folders stored in Box» (o Read-only, si no necessites pujar/eliminar fitxers).',
+      step7: 'Enganxa el Client ID al camp de sota.',
+    },
+    error: {
+      exchangeCode: 'Box: no s’ha pogut bescanviar el code per un token (estat {status})',
+      requireClientId: 'Desa primer un Client ID (consulta l’auxiliar de configuració).',
+      requireRedirectUri:
+        'No s’ha pogut determinar redirectUri automàticament. Indica’l explícitament a les opcions de BoxProvider (necessari si el plugin es carrega mitjançant <script type="module"> o un bundler).',
+      requireTokenEndpoint: 'BoxProvider necessita l’opció tokenEndpoint (un petit servidor propi que guarda el Client Secret de Box) — consulta el README, secció «Box».',
+      notConnected: 'Box no està connectat.',
+      sessionExpired: 'La sessió de Box ha caducat, torna a iniciar sessió.',
+      refreshFailed: 'Box: no s’ha pogut renovar el token (estat {status})',
+      downloadFailed: 'Box: no s’ha pogut baixar «{name}» (error de xarxa/CORS) — consulta el README, secció «Box»',
+      fileTooLarge:
+        'El fitxer supera els {maxMb} MB — els fitxers de Box s’insereixen com a URL data perquè no hi ha cap servidor intermediari de baixada, i aquest fitxer és massa gran per a això.',
+      uploadFailed: 'Box: la pujada ha fallat (estat {status})',
+      uploadNetworkError: 'Box: error de xarxa en pujar el fitxer',
+    },
+    sessionNote: 'Els tokens de refresc de Box són vàlids com a màxim 60 dies i es reemplacen per un de nou cada vegada que s’utilitzen — si no uses aquest lloc durant 60 dies seguits, hauràs de tornar a iniciar sessió. Aquest proveïdor també depèn d’un petit servidor propi perquè el Client Secret de Box no arribi al navegador.',
   },
   s3: {
     connectMenuItem: 'Connecta S3',

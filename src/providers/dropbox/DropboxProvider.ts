@@ -2,6 +2,7 @@ import type {
   AuthState,
   ListOptions,
   ListResult,
+  ProviderSessionInfo,
   ProviderSetupInfo,
   ResolvedAsset,
   StorageItem,
@@ -42,6 +43,16 @@ interface StoredTokens {
   refreshToken?: string;
   expiresAt: number; // epoch ms
   accountLabel?: string;
+  /**
+   * epoch ms — когда пользователь ПЕРВЫЙ РАЗ прошёл `authenticate()`
+   * (не путать с `expiresAt` — тем истечения ТЕКУЩЕГО access-токена,
+   * который тихо обновляется каждые ~4 часа). Нужно только для
+   * отображения в "Подключённые аккаунты" (см. `getSessionInfo()`) —
+   * сам провайдер это поле никак не использует. `undefined` у токенов,
+   * сохранённых до появления этого поля (более старая версия плагина) —
+   * тогда просто показываем "неизвестно" вместо даты, а не 1970 год.
+   */
+  authenticatedAt?: number;
 }
 
 interface DropboxMetadata {
@@ -209,10 +220,21 @@ export class DropboxProvider implements StorageProvider {
       accessToken: json.access_token,
       refreshToken: json.refresh_token,
       expiresAt: Date.now() + json.expires_in * 1000,
+      authenticatedAt: Date.now(),
     };
     this.writeTokens(this.tokens);
 
     return this.getAuthState();
+  }
+
+  /** См. `ProviderSessionInfo` — данные для вкладки "Подключённые аккаунты" (AssetBrowser.openSettingsModal). Чисто информационные, ничем не управляют. */
+  getSessionInfo(): ProviderSessionInfo {
+    return {
+      authenticatedAt: this.tokens?.authenticatedAt,
+      expiresAt: this.tokens?.expiresAt,
+      credential: this.appKey ?? undefined,
+      sessionNoteKey: 'dropbox.sessionNote',
+    };
   }
 
   disconnect(): void {

@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Nije uspjelo čitanje datoteke',
     },
   },
+  settings: {
+    tabButton: 'Povezani nalozi',
+    title: 'Povezani nalozi',
+    empty: 'Nijedan provajder ovdje još ne podržava prijavu putem App Key/Client ID.',
+    authenticatedAt: 'Autorizovano {date}',
+    authenticatedAtUnknown: 'Datum autorizacije nije poznat',
+    notConnected: 'Nije povezano',
+    tokenExpiresIn: 'Token ističe za {time}',
+    tokenExpired: 'Token je istekao — automatski će se obnoviti pri sljedećoj radnji',
+    close: 'Zatvori',
+  },
   dropbox: {
     setup: {
       step1: 'Otvorite Dropbox App Console i kliknite „Create app”.',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: otpremanje nije uspjelo (status {status})',
       uploadNetworkError: 'Dropbox: mrežna greška prilikom otpremanja datoteke',
     },
+    sessionNote: 'Dropbox sesija nema vremensko ograničenje: važi dok se ne odjavite ili dok pristup ne bude opozvan u samim Dropbox podešavanjima.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: otpremanje nije uspjelo (status {status})',
       uploadNetworkError: 'Google Drive: mrežna greška prilikom otpremanja datoteke',
     },
+    sessionNote: 'Google Drive sesija se automatski obnavlja (otprilike svaki sat) dok god ste prijavljeni na Google nalog u ovom pregledniku.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: otpremanje nije uspjelo (status {status})',
       uploadNetworkError: 'OneDrive: mrežna greška prilikom otpremanja datoteke',
     },
+    sessionNote: 'Microsoft ograničava sesiju za aplikacije koje rade u pregledniku (SPA) na maksimalno 24 sata — nakon toga je potrebna ponovna prijava; ovo je ograničenje same Microsoft platforme, ne dodatka.',
+  },
+  box: {
+    setup: {
+      step1: 'Otvorite Box Developer Console i napravite novu aplikaciju sa OAuth 2.0 (User) autentifikacijom — ne Server Authentication (JWT/CCG), što se kasnije ne može promijeniti.',
+      step2Server: 'Za razliku od Dropboxa, Google Drivea i OneDrivea, Box obavezno zahtijeva Client Secret za prijavu, a sam Box upozorava da ta tajna nikada ne smije biti u kodu preglednika — zato ovom provajderu treba mali vlastiti server koji je čuva (opcija tokenEndpoint ispod; gotov primjer nalazi se u README-u, odjeljak "Box").',
+      step3: 'Na stranici Configuration aplikacije kopirajte Client ID i Client Secret. Client ID zalijepite ispod — Client Secret čuvajte samo u environment varijablama vašeg servera, nikad ovdje.',
+      step4WithRedirect: 'Na istoj stranici Configuration, pod Redirect URIs, zalijepite ovo i kliknite Save:',
+      step4NoRedirect: 'Na istoj stranici Configuration, pod Redirect URIs, dodajte punu URL adresu stranice public/box-callback.html na vašoj domeni — nije je bilo moguće automatski otkriti (vidi redirectUri u opcijama provajdera).',
+      step5WithOrigin: 'I dalje na stranici Configuration, skrolajte do CORS Domains i dodajte ovaj origin (potreban da bi preglednik mogao direktno pozivati Box API):',
+      step5NoOrigin: 'I dalje na stranici Configuration, skrolajte do CORS Domains i dodajte tačan origin (protokol + domena + port) sa kojeg se ova stranica servira — nije ga bilo moguće automatski otkriti.',
+      step6: 'Pod Application Scopes uključite "Read and write all files and folders stored in Box" (ili Read-only, ako vam ne trebaju otpremanje/brisanje).',
+      step7: 'Zalijepite Client ID u polje ispod.',
+    },
+    error: {
+      exchangeCode: 'Box: nije uspjela zamjena code-a za token (status {status})',
+      requireClientId: 'Prvo sačuvajte Client ID (vidi čarobnjak za podešavanje).',
+      requireRedirectUri:
+        'Nije moguće automatski odrediti redirectUri. Navedite ga eksplicitno u opcijama BoxProvider-a (potrebno ako se dodatak učitava putem <script type="module"> ili bundlera).',
+      requireTokenEndpoint: 'BoxProvider zahtijeva opciju tokenEndpoint (mali vlastiti server koji čuva Box Client Secret) — vidi README, odjeljak "Box".',
+      notConnected: 'Box nije povezan.',
+      sessionExpired: 'Box sesija je istekla, prijavite se ponovo.',
+      refreshFailed: 'Box: nije uspjelo obnavljanje tokena (status {status})',
+      downloadFailed: 'Box: preuzimanje "{name}" nije uspjelo (mrežna/CORS greška) — vidi README, odjeljak "Box"',
+      fileTooLarge:
+        'Fajl je veći od {maxMb} MB — Box fajlovi se umeću kao data URL jer ne postoji proxy za preuzimanje, a ovaj fajl je za to prevelik.',
+      uploadFailed: 'Box: otpremanje nije uspjelo (status {status})',
+      uploadNetworkError: 'Box: mrežna greška prilikom otpremanja fajla',
+    },
+    sessionNote: 'Box refresh tokeni važe najviše 60 dana i zamjenjuju se novim pri svakoj upotrebi — ako ovu stranicu ne koristite 60 dana zaredom, morat ćete se ponovo prijaviti. Ovaj provajder također zavisi od malog vlastitog servera kako Box Client Secret ne bi dospio u preglednik.',
   },
   s3: {
     connectMenuItem: 'Poveži S3',

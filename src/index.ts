@@ -14,6 +14,17 @@ export { GoogleDriveProvider } from './providers/google/GoogleDriveProvider';
 export type { GoogleDriveProviderOptions } from './providers/google/GoogleDriveProvider';
 export { OneDriveProvider } from './providers/onedrive/OneDriveProvider';
 export type { OneDriveProviderOptions } from './providers/onedrive/OneDriveProvider';
+/**
+ * В отличие от Dropbox/Google/OneDrive выше, у `BoxProvider`
+ * ОБЯЗАТЕЛЬНАЯ опция конструктора — `tokenEndpoint` (маленький сервер
+ * владельца сайта для обмена code/refresh на токен, см. подробный
+ * doc-комментарий в `BoxProvider.ts` и README, раздел "Box"): у Box
+ * нет ни PKCE, ни implicit-flow, и обмен на токен обязательно требует
+ * client_secret, который нельзя держать в браузере — единственный из
+ * четырёх облачных провайдеров, которому нужен свой бэкенд.
+ */
+export { BoxProvider } from './providers/box/BoxProvider';
+export type { BoxProviderOptions } from './providers/box/BoxProvider';
 export { LocalAssetsProvider } from './providers/local/LocalAssetsProvider';
 export type { LocalAssetsProviderOptions } from './providers/local/LocalAssetsProvider';
 /**
@@ -35,15 +46,17 @@ export type { ComponentDef } from './canvas/componentDef';
 /**
  * grapesjs-cloud-assets — вставка медиа (картинка, видео, аудио,
  * документ) из облачных хранилищ через один общий UI с вкладками:
- * Dropbox, Google Drive, OneDrive (настраивает владелец сайта через
- * `pluginsOpts.providers`) и S3-совместимые хранилища (MinIO, Wasabi,
+ * Dropbox, Google Drive, OneDrive, Box (настраивает владелец сайта
+ * через `pluginsOpts.providers` — у Box дополнительно нужен свой
+ * маленький сервер, см. `BoxProviderOptions.tokenEndpoint` и README)
+ * и S3-совместимые хранилища (MinIO, Wasabi,
  * DigitalOcean Spaces, Cloudflare R2, сам AWS S3...), которые
  * подключает уже сам посетитель — кнопкой "+" в ряду вкладок, без
  * участия владельца сайта, см. `S3Provider`/`S3ConnectionConfig`.
  *
  * Использование:
  *
- *   import cloudAssets, { DropboxProvider, GoogleDriveProvider, OneDriveProvider } from 'grapesjs-cloud-assets';
+ *   import cloudAssets, { DropboxProvider, GoogleDriveProvider, OneDriveProvider, BoxProvider } from 'grapesjs-cloud-assets';
  *
  *   grapesjs.init({
  *     // ...
@@ -54,15 +67,16 @@ export type { ComponentDef } from './canvas/componentDef';
  *           new DropboxProvider(),
  *           new GoogleDriveProvider(),
  *           new OneDriveProvider(),
+ *           new BoxProvider({ tokenEndpoint: '/api/box-token' }), // свой сервер — см. README, раздел "Box"
  *         ],
  *       },
  *     },
  *   });
  *
- * Ни один из трёх провайдеров не принимает App Key/Client ID в
- * конструкторе — ни у Dropbox, ни у Google, ни у Microsoft нет
- * общего ключа, который работал бы на произвольном чужом домене без
- * его предрегистрации, так что "вписать чужой App Key в код" всё
+ * Ни один из четырёх провайдеров не принимает App Key/Client ID в
+ * конструкторе — ни у Dropbox, ни у Google, ни у Microsoft, ни у Box
+ * нет общего ключа, который работал бы на произвольном чужом домене
+ * без его предрегистрации, так что "вписать чужой App Key в код" всё
  * равно не сработало бы для стороннего сайта. Вместо этого при
  * первом открытии вкладки провайдера пользователь плагина видит
  * пошаговый мастер настройки (ссылка на консоль провайдера, нужные
@@ -70,18 +84,25 @@ export type { ComponentDef } from './canvas/componentDef';
  * автоматически, где применимо) и поле для своего ключа; ключ
  * сохраняется в localStorage браузера, и при повторном заходе
  * мастер не показывается снова. `redirectUri` в
- * `DropboxProviderOptions`/`OneDriveProviderOptions` остаётся
- * необязательной ручной настройкой на случай, если автоопределение
- * не сработало (актуально для ESM/бандлерной сборки — см. комментарий
- * в `ownScript.ts`); у `GoogleDriveProviderOptions` такого поля нет —
- * Google Identity Services сам управляет своим попапом без
- * отдельного redirect URI (см. doc-комментарий в `GoogleDriveProvider.ts`).
+ * `DropboxProviderOptions`/`OneDriveProviderOptions`/`BoxProviderOptions`
+ * остаётся необязательной ручной настройкой на случай, если
+ * автоопределение не сработало (актуально для ESM/бандлерной сборки —
+ * см. комментарий в `ownScript.ts`); у `GoogleDriveProviderOptions`
+ * такого поля нет — Google Identity Services сам управляет своим
+ * попапом без отдельного redirect URI (см. doc-комментарий в
+ * `GoogleDriveProvider.ts`).
  *
  * Важное отличие Google Drive от Dropbox/OneDrive — см. подробности
  * в doc-комментарии `GoogleDriveProvider` и в README: без своего
  * backend'а Google не отдаёт готовую embeddable-ссылку на приватный
  * файл, поэтому вставленное изображение/файл превращается в data:
- * URL (с ограничением на размер), а не в обычную http(s)-ссылку.
+ * URL (с ограничением на размер), а не в обычную http(s)-ссылку. Box
+ * устроен так же (см. doc-комментарий `BoxProvider`), но по другой
+ * причине — но у Box, в отличие от всех трёх остальных, ЕСТЬ
+ * `tokenEndpoint` в конструкторе (обязательная опция, без неё
+ * провайдер вообще не сможет войти) — это не App Key/секрет, а адрес
+ * маленького сервера самого владельца сайта, см. doc-комментарий
+ * `BoxProviderOptions.tokenEndpoint`.
  *
  * Локализация: весь текст интерфейса плагина уже переведён на все
  * 22 языка, которые поддерживает сама GrapesJS (`grapesjs/locale`) —

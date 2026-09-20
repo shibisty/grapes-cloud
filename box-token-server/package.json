@@ -1,0 +1,17 @@
+{
+  "name": "grapesjs-cloud-assets-box-token-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Необязательный token-exchange сервер для провайдера Box плагина grapesjs-cloud-assets. Нужен, только если вы включаете BoxProvider — Box требует client_secret на каждый обмен токена, а его нельзя держать в браузере. Не нужен, если Box вы не используете.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}

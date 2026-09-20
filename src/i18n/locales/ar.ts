@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'تعذّرت قراءة الملف',
     },
   },
+  settings: {
+    tabButton: 'الحسابات المتصلة',
+    title: 'الحسابات المتصلة',
+    empty: 'لا يوجد مزود هنا يدعم تسجيل الدخول عبر App Key/Client ID بعد.',
+    authenticatedAt: 'تم التفويض في {date}',
+    authenticatedAtUnknown: 'تاريخ التفويض غير معروف',
+    notConnected: 'غير متصل',
+    tokenExpiresIn: 'تنتهي صلاحية الرمز خلال {time}',
+    tokenExpired: 'انتهت صلاحية الرمز — سيتم تحديثه تلقائيًا عند الإجراء التالي',
+    close: 'إغلاق',
+  },
   dropbox: {
     setup: {
       step1: 'افتح Dropbox App Console وانقر على «Create app».',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: فشل الرفع (الحالة {status})',
       uploadNetworkError: 'Dropbox: خطأ في الشبكة أثناء رفع الملف',
     },
+    sessionNote: 'جلسة Dropbox غير محدودة بوقت: تبقى صالحة حتى تسجل الخروج أو تُلغى صلاحية الوصول من إعدادات Dropbox نفسه.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: فشل الرفع (الحالة {status})',
       uploadNetworkError: 'Google Drive: خطأ في الشبكة أثناء رفع الملف',
     },
+    sessionNote: 'يتم تحديث جلسة Google Drive تلقائيًا (كل ساعة تقريبًا) طالما أنك لا تزال مسجلاً الدخول إلى حساب Google في هذا المتصفح.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: فشل الرفع (الحالة {status})',
       uploadNetworkError: 'OneDrive: خطأ في الشبكة أثناء رفع الملف',
     },
+    sessionNote: 'تحد Microsoft جلسة التطبيقات التي تعمل في المتصفح (SPA) بـ 24 ساعة كحد أقصى — بعدها يجب تسجيل الدخول من جديد، وهذا قيد من Microsoft وليس من الإضافة.',
+  },
+  box: {
+    setup: {
+      step1: 'افتح Box Developer Console وأنشئ تطبيقًا جديدًا باستخدام مصادقة OAuth 2.0 (User) — وليس Server Authentication (JWT/CCG)، الذي لا يمكن تغييره لاحقًا.',
+      step2Server: 'خلافًا لـ Dropbox وGoogle Drive وOneDrive، يتطلب Box بالضرورة Client Secret لتسجيل الدخول، ويحذّر Box نفسه من أن هذا السر يجب ألا يوجد أبدًا في كود المتصفح — لذا يحتاج هذا المزوّد إلى خادم صغير خاص بك للاحتفاظ به (خيار tokenEndpoint أدناه؛ يوجد مثال جاهز في README، قسم "Box").',
+      step3: 'في صفحة Configuration الخاصة بالتطبيق، انسخ Client ID وClient Secret. الصق Client ID أدناه — واحتفظ بـ Client Secret فقط في متغيرات بيئة خادمك، ولا تضعه هنا أبدًا.',
+      step4WithRedirect: 'في نفس صفحة Configuration، ضمن Redirect URIs، الصق هذا وانقر على Save:',
+      step4NoRedirect: 'في نفس صفحة Configuration، ضمن Redirect URIs، أضف عنوان URL الكامل لصفحة public/box-callback.html على نطاقك — تعذّر اكتشافه تلقائيًا (راجع redirectUri في خيارات المزوّد).',
+      step5WithOrigin: 'ما زلت في صفحة Configuration، مرّر إلى CORS Domains وأضف هذا الـ origin (ضروري كي يتمكن المتصفح من استدعاء واجهة Box API مباشرة):',
+      step5NoOrigin: 'ما زلت في صفحة Configuration، مرّر إلى CORS Domains وأضف الـ origin الدقيق (البروتوكول + النطاق + المنفذ) الذي يُقدَّم منه هذا الموقع — تعذّر اكتشافه تلقائيًا.',
+      step6: 'ضمن Application Scopes، فعّل "Read and write all files and folders stored in Box" (أو Read-only إذا لم تكن بحاجة إلى الرفع/الحذف).',
+      step7: 'الصق Client ID في الحقل أدناه.',
+    },
+    error: {
+      exchangeCode: 'Box: تعذّر استبدال code برمز الوصول (الحالة {status})',
+      requireClientId: 'احفظ أولاً Client ID (راجع معالج الإعداد).',
+      requireRedirectUri:
+        'تعذّر تحديد redirectUri تلقائيًا. حدده صراحةً في خيارات BoxProvider (مطلوب عند تحميل الإضافة عبر <script type="module"> أو أداة تجميع).',
+      requireTokenEndpoint: 'يتطلب BoxProvider خيار tokenEndpoint (خادم صغير خاص بك يحتفظ بـ Client Secret الخاص بـ Box) — راجع README، قسم "Box".',
+      notConnected: 'Box غير متصل.',
+      sessionExpired: 'انتهت جلسة Box، يرجى تسجيل الدخول مرة أخرى.',
+      refreshFailed: 'Box: تعذّر تحديث رمز الوصول (الحالة {status})',
+      downloadFailed: 'Box: تعذّر تنزيل "{name}" (خطأ شبكة/CORS) — راجع README، قسم "Box"',
+      fileTooLarge:
+        'حجم الملف أكبر من {maxMb} ميغابايت — يتم إدراج ملفات Box كـ data URL لعدم وجود وسيط تنزيل (proxy)، وهذا الملف كبير جدًا لذلك.',
+      uploadFailed: 'Box: فشل الرفع (الحالة {status})',
+      uploadNetworkError: 'Box: خطأ في الشبكة أثناء رفع الملف',
+    },
+    sessionNote: 'تكون رموز تحديث Box صالحة لمدة أقصاها 60 يومًا ويتم استبدالها برمز جديد في كل استخدام — إذا لم تستخدم هذا الموقع لمدة 60 يومًا متتاليًا، ستحتاج إلى تسجيل الدخول مرة أخرى. يعتمد هذا المزوّد أيضًا على خادم صغير خاص بك لإبقاء Client Secret الخاص بـ Box بعيدًا عن المتصفح.',
   },
   s3: {
     connectMenuItem: 'ربط S3',

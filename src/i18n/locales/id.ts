@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Gagal membaca file',
     },
   },
+  settings: {
+    tabButton: 'Akun terhubung',
+    title: 'Akun terhubung',
+    empty: 'Belum ada penyedia di sini yang mendukung login dengan App Key/Client ID.',
+    authenticatedAt: 'Diotorisasi pada {date}',
+    authenticatedAtUnknown: 'Tanggal otorisasi tidak diketahui',
+    notConnected: 'Belum terhubung',
+    tokenExpiresIn: 'Token kedaluwarsa dalam {time}',
+    tokenExpired: 'Token telah kedaluwarsa — akan diperbarui otomatis pada tindakan berikutnya',
+    close: 'Tutup',
+  },
   dropbox: {
     setup: {
       step1: 'Buka Dropbox App Console dan klik "Create app".',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: unggah gagal (status {status})',
       uploadNetworkError: 'Dropbox: kesalahan jaringan saat mengunggah file',
     },
+    sessionNote: 'Sesi Dropbox tidak memiliki batas waktu: tetap berlaku hingga Anda keluar atau mencabut akses di pengaturan Dropbox itu sendiri.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: unggah gagal (status {status})',
       uploadNetworkError: 'Google Drive: kesalahan jaringan saat mengunggah file',
     },
+    sessionNote: 'Sesi Google Drive diperbarui otomatis (kira-kira setiap jam) selama Anda tetap masuk ke akun Google di browser ini.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: unggah gagal (status {status})',
       uploadNetworkError: 'OneDrive: kesalahan jaringan saat mengunggah file',
     },
+    sessionNote: 'Microsoft membatasi sesi untuk aplikasi yang berjalan di browser (SPA) maksimal 24 jam — setelah itu Anda perlu masuk lagi. Ini adalah batasan dari platform Microsoft sendiri, bukan dari plugin.',
+  },
+  box: {
+    setup: {
+      step1: 'Buka Box Developer Console dan buat aplikasi baru dengan autentikasi OAuth 2.0 (User) — bukan Server Authentication (JWT/CCG), yang tidak bisa diubah setelahnya.',
+      step2Server: 'Berbeda dari Dropbox, Google Drive, dan OneDrive, Box mewajibkan Client Secret untuk login, dan Box sendiri memperingatkan bahwa rahasia ini tidak boleh berada di kode browser — karena itu provider ini memerlukan server kecil milik Anda sendiri untuk menyimpannya (opsi tokenEndpoint di bawah; contoh siap pakai ada di README, bagian "Box").',
+      step3: 'Di halaman Configuration aplikasi, salin Client ID dan Client Secret. Tempel Client ID di bawah — simpan Client Secret hanya di variabel lingkungan server Anda, jangan pernah di sini.',
+      step4WithRedirect: 'Di halaman Configuration yang sama, pada Redirect URIs, tempel ini dan klik Save:',
+      step4NoRedirect: 'Di halaman Configuration yang sama, pada Redirect URIs, tambahkan URL lengkap halaman public/box-callback.html di domain Anda — tidak dapat dideteksi otomatis (lihat redirectUri di opsi provider).',
+      step5WithOrigin: 'Masih di halaman Configuration, gulir ke CORS Domains dan tambahkan origin ini (diperlukan agar browser dapat memanggil API Box secara langsung):',
+      step5NoOrigin: 'Masih di halaman Configuration, gulir ke CORS Domains dan tambahkan origin yang tepat (protokol + domain + port) tempat situs ini disajikan — tidak dapat dideteksi otomatis.',
+      step6: 'Di Application Scopes, aktifkan "Read and write all files and folders stored in Box" (atau Read-only, jika tidak memerlukan unggah/hapus).',
+      step7: 'Tempel Client ID ke kolom di bawah.',
+    },
+    error: {
+      exchangeCode: 'Box: gagal menukar code dengan token (status {status})',
+      requireClientId: 'Simpan dulu Client ID (lihat wizard pengaturan).',
+      requireRedirectUri:
+        'Tidak dapat menentukan redirectUri secara otomatis. Tentukan secara eksplisit di opsi BoxProvider (diperlukan jika plugin dimuat melalui <script type="module"> atau bundler).',
+      requireTokenEndpoint: 'BoxProvider memerlukan opsi tokenEndpoint (server kecil milik Anda sendiri yang menyimpan Client Secret Box) — lihat README, bagian "Box".',
+      notConnected: 'Box tidak terhubung.',
+      sessionExpired: 'Sesi Box telah berakhir, silakan login lagi.',
+      refreshFailed: 'Box: gagal memperbarui token (status {status})',
+      downloadFailed: 'Box: gagal mengunduh "{name}" (kesalahan jaringan/CORS) — lihat README, bagian "Box"',
+      fileTooLarge:
+        'Berkas lebih besar dari {maxMb} MB — berkas Box disisipkan sebagai URL data karena tidak ada proxy unduhan, dan berkas ini terlalu besar untuk itu.',
+      uploadFailed: 'Box: unggahan gagal (status {status})',
+      uploadNetworkError: 'Box: kesalahan jaringan saat mengunggah berkas',
+    },
+    sessionNote: 'Token refresh Box berlaku maksimal 60 hari dan diganti dengan yang baru setiap kali digunakan — jika Anda tidak menggunakan situs ini selama 60 hari berturut-turut, Anda perlu login lagi. Provider ini juga bergantung pada server kecil milik Anda sendiri agar Client Secret Box tidak sampai ke browser.',
   },
   s3: {
     connectMenuItem: 'Hubungkan S3',

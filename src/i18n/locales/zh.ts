@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: '读取文件失败',
     },
   },
+  settings: {
+    tabButton: '已连接的账户',
+    title: '已连接的账户',
+    empty: '这里还没有提供商支持通过 App Key/Client ID 登录。',
+    authenticatedAt: '于 {date} 授权',
+    authenticatedAtUnknown: '授权日期未知',
+    notConnected: '未连接',
+    tokenExpiresIn: '令牌将在 {time} 后过期',
+    tokenExpired: '令牌已过期 — 将在下次操作时自动刷新',
+    close: '关闭',
+  },
   dropbox: {
     setup: {
       step1: '打开 Dropbox App Console，点击 "Create app"。',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox：上传失败（状态码 {status}）',
       uploadNetworkError: 'Dropbox：上传文件时发生网络错误',
     },
+    sessionNote: 'Dropbox 会话没有时间限制：在您退出登录或在 Dropbox 自己的设置中撤销访问权限之前，它将保持有效。',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive：上传失败（状态码 {status}）',
       uploadNetworkError: 'Google Drive：上传文件时发生网络错误',
     },
+    sessionNote: '只要您在此浏览器中保持登录 Google 账户，Google Drive 会话就会自动刷新（大约每小时一次）。',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive：上传失败（状态码 {status}）',
       uploadNetworkError: 'OneDrive：上传文件时发生网络错误',
     },
+    sessionNote: 'Microsoft 将浏览器端应用（SPA）的会话上限设为 24 小时 —— 之后需要重新登录。这是 Microsoft 平台本身的限制，并非插件的限制。',
+  },
+  box: {
+    setup: {
+      step1: '打开 Box Developer Console,使用 OAuth 2.0(User)身份验证创建一个新应用 —— 而不是之后无法更改的 Server Authentication(JWT/CCG)。',
+      step2Server: '与 Dropbox、Google Drive 和 OneDrive 不同,Box 登录必须使用 Client Secret,而 Box 自己也警告该密钥绝不能出现在浏览器代码中 —— 因此该提供方需要一台您自己的小型服务器来保管它(见下方 tokenEndpoint 选项;README 的“Box”一节提供了可直接使用的示例)。',
+      step3: '在应用的 Configuration 页面复制 Client ID 和 Client Secret。将 Client ID 粘贴到下方 —— Client Secret 只能保存在您服务器的环境变量中,切勿粘贴到此处。',
+      step4WithRedirect: '在同一个 Configuration 页面的 Redirect URIs 中粘贴以下内容并点击 Save:',
+      step4NoRedirect: '在同一个 Configuration 页面的 Redirect URIs 中添加您域名下 public/box-callback.html 页面的完整 URL —— 无法自动检测到(参见提供方选项中的 redirectUri)。',
+      step5WithOrigin: '仍在 Configuration 页面,滚动到 CORS Domains 并添加此 origin(浏览器需要它才能直接调用 Box API):',
+      step5NoOrigin: '仍在 Configuration 页面,滚动到 CORS Domains 并添加此站点所使用的确切 origin(协议 + 域名 + 端口)—— 无法自动检测到。',
+      step6: '在 Application Scopes 中启用“Read and write all files and folders stored in Box”(如果不需要上传/删除,可选择 Read-only)。',
+      step7: '将 Client ID 粘贴到下方字段中。',
+    },
+    error: {
+      exchangeCode: 'Box:code 换取令牌失败(状态 {status})',
+      requireClientId: '请先保存 Client ID(参见设置向导)。',
+      requireRedirectUri:
+        '无法自动确定 redirectUri。请在 BoxProvider 选项中显式指定(当插件通过 <script type="module"> 或打包工具加载时需要)。',
+      requireTokenEndpoint: 'BoxProvider 需要 tokenEndpoint 选项(一台保管 Box Client Secret 的您自己的小型服务器)—— 参见 README“Box”一节。',
+      notConnected: 'Box 未连接。',
+      sessionExpired: 'Box 会话已过期,请重新登录。',
+      refreshFailed: 'Box:刷新令牌失败(状态 {status})',
+      downloadFailed: 'Box:下载“{name}”失败(网络/CORS 错误)—— 参见 README“Box”一节',
+      fileTooLarge:
+        '文件大于 {maxMb} MB —— 由于没有下载代理,Box 文件以 data URL 形式插入,而该文件对此而言太大了。',
+      uploadFailed: 'Box:上传失败(状态 {status})',
+      uploadNetworkError: 'Box:上传文件时发生网络错误',
+    },
+    sessionNote: 'Box 的刷新令牌最长有效期为 60 天,且每次使用后都会被替换为新令牌 —— 如果您连续 60 天未使用此站点,则需要重新登录。该提供方还依赖您自己的小型服务器,以避免 Box Client Secret 泄露到浏览器中。',
   },
   s3: {
     connectMenuItem: '连接 S3',

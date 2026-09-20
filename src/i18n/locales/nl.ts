@@ -100,6 +100,17 @@ const messages: CloudAssetsMessages = {
       readFile: 'Bestand kon niet worden gelezen',
     },
   },
+  settings: {
+    tabButton: 'Gekoppelde accounts',
+    title: 'Gekoppelde accounts',
+    empty: 'Geen enkele provider hier ondersteunt nog inloggen met een App Key/Client ID.',
+    authenticatedAt: 'Geautoriseerd op {date}',
+    authenticatedAtUnknown: 'Autorisatiedatum onbekend',
+    notConnected: 'Niet verbonden',
+    tokenExpiresIn: 'Token verloopt over {time}',
+    tokenExpired: 'Token is verlopen — wordt automatisch vernieuwd bij de volgende actie',
+    close: 'Sluiten',
+  },
   dropbox: {
     setup: {
       step1: 'Open de Dropbox App Console en klik op "Create app".',
@@ -121,6 +132,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Dropbox: uploaden is mislukt (status {status})',
       uploadNetworkError: 'Dropbox: netwerkfout tijdens het uploaden van het bestand',
     },
+    sessionNote: 'De Dropbox-sessie heeft geen tijdslimiet: deze blijft geldig totdat je uitlogt of de toegang intrekt in de instellingen van Dropbox zelf.',
   },
   google: {
     setup: {
@@ -145,6 +157,7 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'Google Drive: uploaden is mislukt (status {status})',
       uploadNetworkError: 'Google Drive: netwerkfout tijdens het uploaden van het bestand',
     },
+    sessionNote: 'De Google Drive-sessie wordt automatisch vernieuwd (ongeveer elk uur) zolang je in deze browser ingelogd blijft bij je Google-account.',
   },
   microsoft: {
     setup: {
@@ -175,6 +188,36 @@ const messages: CloudAssetsMessages = {
       uploadFailed: 'OneDrive: uploaden is mislukt (status {status})',
       uploadNetworkError: 'OneDrive: netwerkfout tijdens het uploaden van het bestand',
     },
+    sessionNote: 'Microsoft beperkt de sessie voor apps die in de browser draaien (SPA) tot maximaal 24 uur — daarna moet je opnieuw inloggen. Dit is een beperking van het Microsoft-platform zelf, niet van de plugin.',
+  },
+  box: {
+    setup: {
+      step1: 'Open de Box Developer Console en maak een nieuwe app met OAuth 2.0-(User-)authenticatie — niet Server Authentication (JWT/CCG), dat kan later niet meer worden gewijzigd.',
+      step2Server: 'Anders dan Dropbox, Google Drive en OneDrive vereist Box een Client Secret om in te loggen, en Box zelf waarschuwt dat dit geheim nooit in browsercode mag staan — daarom heeft deze provider een eigen kleine server nodig die het bewaart (optie tokenEndpoint hieronder; een kant-en-klaar voorbeeld staat in de README, sectie "Box").',
+      step3: 'Kopieer op de Configuration-pagina van de app de Client ID en het Client Secret. Plak de Client ID hieronder — bewaar het Client Secret alleen in de omgevingsvariabelen van uw server, nooit hier.',
+      step4WithRedirect: 'Plak dit op dezelfde Configuration-pagina onder Redirect URIs en klik op Save:',
+      step4NoRedirect: 'Voeg op dezelfde Configuration-pagina onder Redirect URIs de volledige URL toe van de pagina public/box-callback.html op uw domein — deze kon niet automatisch worden gedetecteerd (zie redirectUri in de provideropties).',
+      step5WithOrigin: 'Scroll op dezelfde Configuration-pagina naar CORS Domains en voeg deze origin toe (nodig zodat de browser de Box-API rechtstreeks kan aanroepen):',
+      step5NoOrigin: 'Scroll op dezelfde Configuration-pagina naar CORS Domains en voeg de exacte origin (protocol + domein + poort) toe waarvandaan deze site wordt geserveerd — deze kon niet automatisch worden gedetecteerd.',
+      step6: 'Schakel onder Application Scopes "Read and write all files and folders stored in Box" in (of Read-only, als u geen upload/verwijderen nodig heeft).',
+      step7: 'Plak de Client ID in het veld hieronder.',
+    },
+    error: {
+      exchangeCode: 'Box: kon de code niet inwisselen voor een token (status {status})',
+      requireClientId: 'Sla eerst een Client ID op (zie de installatiewizard).',
+      requireRedirectUri:
+        'Kon redirectUri niet automatisch bepalen. Geef deze expliciet op in de BoxProvider-opties (nodig als de plugin via <script type="module"> of een bundler wordt geladen).',
+      requireTokenEndpoint: 'BoxProvider vereist de optie tokenEndpoint (een eigen kleine server die het Box Client Secret bewaart) — zie de README, sectie "Box".',
+      notConnected: 'Box is niet verbonden.',
+      sessionExpired: 'De Box-sessie is verlopen, log opnieuw in.',
+      refreshFailed: 'Box: token kon niet worden vernieuwd (status {status})',
+      downloadFailed: 'Box: kon "{name}" niet downloaden (netwerk-/CORS-fout) — zie de README, sectie "Box"',
+      fileTooLarge:
+        'Het bestand is groter dan {maxMb} MB — Box-bestanden worden ingevoegd als data-URL omdat er geen downloadproxy is, en dit bestand is daarvoor te groot.',
+      uploadFailed: 'Box: uploaden is mislukt (status {status})',
+      uploadNetworkError: 'Box: netwerkfout tijdens het uploaden van het bestand',
+    },
+    sessionNote: 'Box-refreshtokens zijn maximaal 60 dagen geldig en worden bij elk gebruik vervangen door een nieuwe — als u deze site 60 dagen achtereen niet gebruikt, moet u opnieuw inloggen. Deze provider is ook afhankelijk van een eigen kleine server om het Box Client Secret buiten de browser te houden.',
   },
   s3: {
     connectMenuItem: 'S3 verbinden',
