@@ -550,3 +550,16 @@ npm run build   # dist/grapesjs-cloud-assets.js (ESM) + .umd.cjs
 [![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/cw/shibisty)
 
 If this project helps you, consider supporting its development on Patreon ❤️
+
+## Using it by name and changing options in the editor
+
+This plugin follows the plugin contract of grapesjs-plugins-manager (its `docs/plugin-contract.md`): with the UMD bundle on the page it registers itself as `grapesjs-cloud-assets`, so it can be listed like an official plugin —
+
+```js
+grapesjs.init({
+  plugins: ['grapesjs-cloud-assets'],
+  pluginsOpts: { 'grapesjs-cloud-assets': { /* options */ } },
+});
+```
+
+— and grapesjs-plugins-manager shows a form of its options (⚙ in the plugin list). The plugin function carries `meta` (id, version, option schema).

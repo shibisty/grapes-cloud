@@ -287,8 +287,13 @@ export interface S3ConnectionConfig {
 
 /** Опции плагина, которые задаёт владелец сайта в pluginsOpts. */
 export interface CloudAssetsPluginOptions {
-  /** Список подключённых облачных провайдеров — плагин их не создаёт сам. */
-  providers: StorageProvider[];
+  /**
+   * Облачные провайдеры: готовые экземпляры (`new DropboxProvider()`) или,
+   * короче и для форм, их id — `'dropbox'`, `'google-drive'`, `'onedrive'`,
+   * `'box'` — либо `{ type: 'box', tokenEndpoint: '/api/box-token' }`
+   * (объект: `type` + опции конструктора).
+   */
+  providers?: Array<StorageProvider | ProviderSpec>;
   /**
    * Первой вкладкой, перед облачными хранилищами, по умолчанию
    * добавляется "Свои файлы" — локальный менеджер (файлы, уже
@@ -323,3 +328,6 @@ export interface CloudAssetsPluginOptions {
   /** title кнопки на верхней панели редактора. */
   buttonLabel?: string;
 }
+
+/** A provider given by id, or by id with constructor options (`{ type: 'box', tokenEndpoint }`). */
+export type ProviderSpec = string | ({ type: string } & Record<string, unknown>);

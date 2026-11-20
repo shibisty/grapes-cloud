@@ -4,8 +4,11 @@ import { LocalAssetsProvider } from './providers/local/LocalAssetsProvider';
 import { registerCloudMediaBlock } from './canvas/block';
 import { registerCloudMediaButton } from './canvas/panelButton';
 import { registerI18n } from './i18n';
+import { definePlugin, registerControl } from './contract';
+import { META, createProviders, publicOptions } from './options';
 
 export { SUPPORTED_LOCALES } from './i18n';
+export { META, VERSION, createProviders } from './options';
 
 export type { CloudAssetsPluginOptions, StorageProvider, StorageItem, ResolvedAsset, S3ConnectionConfig } from './types';
 export { DropboxProvider } from './providers/dropbox/DropboxProvider';
@@ -126,7 +129,7 @@ export type { ComponentDef } from './canvas/componentDef';
  * продолжает работать как в чистом GrapesJS, каким бы он ни был
  * настроен другими плагинами.
  */
-export default function cloudAssetsPlugin(editor: Editor, opts: CloudAssetsPluginOptions): void {
+function cloudAssetsPlugin(editor: Editor, opts: CloudAssetsPluginOptions): void {
   /**
    * Регистрируем переводы плагина ПЕРВЫМ делом — до создания
    * LocalAssetsProvider и любых блоков/кнопок ниже, у которых уже
@@ -146,8 +149,10 @@ export default function cloudAssetsPlugin(editor: Editor, opts: CloudAssetsPlugi
    */
   const providers: StorageProvider[] = [
     ...(opts?.includeLocalTab === false ? [] : [new LocalAssetsProvider(editor)]),
-    ...(opts?.providers ?? []),
+    ...createProviders(opts?.providers ?? []),
   ];
+  const offControl = registerControl(editor, META, () => publicOptions(opts || {}, providers), () => undefined);
+  editor.on('destroy', offControl);
 
   if (!providers.length) {
     console.warn(
@@ -169,3 +174,8 @@ export default function cloudAssetsPlugin(editor: Editor, opts: CloudAssetsPlugi
     modalTitle: opts.modalTitle,
   });
 }
+
+definePlugin(cloudAssetsPlugin, META);
+
+export { cloudAssetsPlugin };
+export default cloudAssetsPlugin;

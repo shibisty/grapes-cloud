@@ -89,14 +89,14 @@ describe('registerCloudMediaBlock — по блоку в "Storage" на кажд
     localStorage.clear();
   });
 
-  it('регистрирует общий блок "Cloud media" плюс по блоку на каждый статический провайдер (label/category/icon — от самого провайдера)', () => {
+  it('регистрирует по блоку на каждый статический провайдер (label/category/icon — от самого провайдера), без общего блока "Cloud media"', () => {
     const { editor, blocks } = editorWithBlockManager();
     const dropbox = createFakeProvider({ id: 'dropbox', label: 'Dropbox' });
     const google = createFakeProvider({ id: 'google-drive', label: 'Google Drive' });
 
     registerCloudMediaBlock(editor, { providers: [dropbox, google] });
 
-    expect(blocks.has('gca-cloud-media')).toBe(true); // общий блок не убран, только дополнен
+    expect(blocks.has('gca-cloud-media')).toBe(false); // общий блок убран: он дублировал блок первого провайдера
     expect(blocks.get('gca-cloud-media-provider:dropbox')).toMatchObject({ label: 'Dropbox', category: 'Storage', media: dropbox.icon });
     expect(blocks.get('gca-cloud-media-provider:google-drive')).toMatchObject({ label: 'Google Drive', category: 'Storage', media: google.icon });
   });
