@@ -443,6 +443,15 @@ export const STYLES = `
   .gca-settings-modal__row { flex-direction: column; align-items: stretch; }
   .gca-settings-modal__row-actions .gca-btn { width: 100%; }
 }
+/* Overlay mode of the picker (called from another plugin's open dialog): above the GrapesJS modal. */
+.gca-overlay { position: fixed; inset: 0; z-index: 100000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(0,0,0,.55); font-family: var(--gjs-main-font, Helvetica, sans-serif); }
+.gca-overlay__dialog { display: flex; flex-direction: column; width: 90%; max-width: 850px; max-height: calc(100vh - 32px); background: var(--gjs-primary-color, #444); color: var(--gjs-font-color, #ddd); border-radius: 3px; box-shadow: 0 8px 32px rgba(0,0,0,.5); overflow: hidden; }
+.gca-overlay__head { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid var(--gjs-main-dark-color, rgba(0,0,0,.2)); }
+.gca-overlay__title { font-size: 15px; }
+.gca-overlay__close { background: none; border: 0; color: inherit; font-size: 22px; line-height: 1; cursor: pointer; padding: 0 4px; opacity: .8; }
+.gca-overlay__close:hover { opacity: 1; }
+.gca-overlay__body { flex: 1; min-height: 0; overflow: auto; padding: 10px 15px 15px; }
+@media (max-width: 640px) { .gca-overlay { padding: 0; } .gca-overlay__dialog { width: 100%; max-height: 100vh; height: 100%; border-radius: 0; } }
 `;
 
 let injected = false;

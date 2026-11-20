@@ -37,7 +37,7 @@ const TAB_OVERFLOW_RESERVED_WIDTH = 32;
 
 type ViewMode = 'grid' | 'table' | 'tree';
 /** 'all' — фильтр выключен, показываются все типы. */
-type TypeFilter = 'all' | ResolvedAssetType;
+export type TypeFilter = 'all' | ResolvedAssetType;
 type SortColumn = 'name' | 'type' | 'size' | 'modified';
 interface SortState {
   column: SortColumn;
@@ -72,6 +72,12 @@ export interface AssetBrowserProps {
    * параметра.
    */
   initialProviderId?: string;
+  /**
+   * Фильтр по типу, с которым открываются вкладки (`'image'` — когда
+   * пикер позвали для поля-картинки другого плагина, см. команду
+   * `cloud-assets:pick`). Пользователь может переключить его как обычно.
+   */
+  initialTypeFilter?: TypeFilter;
   /** Вызывается для КАЖДОГО вставленного файла (их может быть несколько за одно действие — см. множественный выбор). */
   onSelect: (asset: ResolvedAsset) => void;
   /**
@@ -718,7 +724,7 @@ export class AssetBrowser {
       error: null,
       insertError: null,
       searchQuery: '',
-      typeFilter: 'all',
+      typeFilter: this.props?.initialTypeFilter || 'all',
       sort: null,
       selectedIds: new Set(),
       lastClickedId: null,

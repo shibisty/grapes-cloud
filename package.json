@@ -1,6 +1,6 @@
 {
   "name": "grapesjs-cloud-assets",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "description": "GrapesJS Asset Manager plugin: browse and insert media from Dropbox, Google Drive, OneDrive, Box and S3-compatible storage through one unified UI.",
   "type": "module",
   "main": "./dist/grapesjs-cloud-assets.umd.cjs",

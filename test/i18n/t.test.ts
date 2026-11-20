@@ -34,3 +34,11 @@ describe('isRtlLocale', () => {
     expect(isRtlLocale('zh')).toBe(false);
   });
 });
+
+describe('t() with numbers', () => {
+  it('passes 0 as "0" (GrapesJS fills {param} with `params[key] || ""`)', async () => {
+    const { t } = await import('../../src/i18n/t');
+    const editor = { I18n: { t: (_k: string, o?: { params?: Record<string, unknown> }) => '{count} selected'.replace(/\{(\w+)\}/g, (_m, k) => (o?.params?.[k] as string) || '') } } as any;
+    expect(t(editor, 'common.selectedCount', { count: 0 })).toBe('0 selected');
+  });
+});

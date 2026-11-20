@@ -7,7 +7,7 @@ import { BoxProvider } from './providers/box/BoxProvider';
 
 export const PLUGIN_ID = 'grapesjs-cloud-assets';
 /** Version of this package (a test checks it against package.json). */
-export const VERSION = '0.10.1';
+export const VERSION = '0.11.0';
 
 type Factory = (options: Record<string, unknown>) => StorageProvider;
 

@@ -3,6 +3,7 @@ import type { CloudAssetsPluginOptions, StorageProvider } from './types';
 import { LocalAssetsProvider } from './providers/local/LocalAssetsProvider';
 import { registerCloudMediaBlock } from './canvas/block';
 import { registerCloudMediaButton } from './canvas/panelButton';
+import { registerPickCommand } from './canvas/pickCommand';
 import { registerI18n } from './i18n';
 import { definePlugin, registerControl } from './contract';
 import { META, createProviders, publicOptions } from './options';
@@ -43,6 +44,9 @@ export type { LocalAssetsProviderOptions } from './providers/local/LocalAssetsPr
  */
 export { S3Provider } from './providers/s3/S3Provider';
 export { openCloudMediaPicker } from './canvas/picker';
+export type { PickerOptions } from './canvas/picker';
+export { PICK_COMMAND } from './canvas/pickCommand';
+export type { PickCommandOptions } from './canvas/pickCommand';
 export { componentDefForAsset } from './canvas/componentDef';
 export type { ComponentDef } from './canvas/componentDef';
 
@@ -160,6 +164,8 @@ function cloudAssetsPlugin(editor: Editor, opts: CloudAssetsPluginOptions): void
     );
     return;
   }
+
+  registerPickCommand(editor, providers, opts.modalTitle);
 
   registerCloudMediaBlock(editor, {
     providers,

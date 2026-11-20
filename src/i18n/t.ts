@@ -13,7 +13,10 @@ const NAMESPACE = 'cloudAssets';
  * этой папки).
  */
 export function t(editor: Editor, key: string, params?: Record<string, unknown>): string {
-  const result = editor.I18n.t(`${NAMESPACE}.${key}`, params ? { params } : undefined);
+  // Числа — строками: GrapesJS подставляет `{param}` через `params[key] || ''`,
+  // и ноль ("0 selected", "Insert (0)") иначе превращался в пустую строку.
+  const ps = params ? Object.fromEntries(Object.entries(params).map(([k, v]) => [k, typeof v === 'number' ? String(v) : v])) : undefined;
+  const result = editor.I18n.t(`${NAMESPACE}.${key}`, ps ? { params: ps } : undefined);
   // На случай полностью отсутствующего ключа (опечатка в коде,
   // кастомный провайдер сослался на несуществующий i18nKey) — лучше
   // показать сам ключ, чем упасть или показать undefined.

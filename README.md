@@ -416,6 +416,26 @@ buttons at the top of the **Storage** section. The top-panel button
 still behaves the old way — it opens on the last active tab — since
 it isn't duplicated by anything else in the UI.
 
+### Picking files for other plugins
+
+Other plugins can use the picker without inserting anything into the canvas — they find it by the
+command name, without importing this package:
+
+```js
+if (editor.Commands.has('cloud-assets:pick')) {
+  const assets = await editor.runCommand('cloud-assets:pick', { type: 'image' }); // ResolvedAsset[] | null
+}
+```
+
+Options: `type` (`'image' | 'video' | 'audio' | 'document'` — the filter the tabs open with), `title`,
+`provider` (the tab to open), `overlay`. While another dialog is open in `editor.Modal`, the picker opens in
+an overlay of its own above it (GrapesJS has one modal: opening it again would replace that dialog with
+its unsaved fields); `overlay: true/false` forces either way. grapesjs-storage (image, file and gallery
+fields) and grapesjs-site-pages (the Open Graph image) use it.
+
+Mind `expiresAt`: Dropbox, OneDrive and S3 give temporary links. Code that keeps the URL for long should
+warn or copy the file somewhere permanent.
+
 ## Adding a new provider
 
 Implement `StorageProvider` (`src/types.ts`):
