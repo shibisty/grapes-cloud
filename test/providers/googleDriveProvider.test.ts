@@ -188,11 +188,10 @@ describe('GoogleDriveProvider', () => {
       const file = new File(['hi'], 'hi.txt', { type: 'text/plain' });
       const uploadPromise = provider.upload(file, '');
       // upload() awaits ensureAccessToken() (GIS, microtask-based) and then
-      // file.arrayBuffer() (FileReader, fires via a real macrotask in jsdom)
-      // before calling xhr.send() — a couple of real setTimeout(0) ticks are
-      // needed here, not just queued microtasks.
-      await new Promise((r) => setTimeout(r, 0));
-      await new Promise((r) => setTimeout(r, 0));
+      // file.arrayBuffer() (FileReader, fires via real macrotasks in jsdom)
+      // before calling xhr.send(). How many ticks that takes depends on the
+      // machine (a fixed count fails on slow ones): wait for the request.
+      for (let i = 0; i < 200 && !handles.length; i++) await new Promise((r) => setTimeout(r, 5));
 
       expect(handles).toHaveLength(1);
       handles[0].respond(200, { id: 'new1', name: 'hi.txt', mimeType: 'text/plain' });
